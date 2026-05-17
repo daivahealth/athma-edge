@@ -8,8 +8,9 @@ Authentication and role-based access control for the BCP application.
 2. Server validates credentials against `bcp_user` table (bcrypt hash comparison)
 3. Server loads user roles from `bcp_user_role` + `bcp_role` tables
 4. Server issues JWT with payload: `{ sub, username, tenantId, roles[] }`
-5. Client stores JWT and includes it as `Authorization: Bearer <token>` on all requests
-6. Server validates JWT on every request via global `JwtAuthGuard`
+5. Server stores the JWT in an HttpOnly `bcp_session` cookie
+6. Client uses credentialed browser requests; JavaScript cannot read the session cookie
+7. Server validates JWT on every request via global `JwtAuthGuard`
 
 ## JWT Configuration
 
@@ -17,9 +18,9 @@ Authentication and role-based access control for the BCP application.
 |---------|-------|-------|
 | Algorithm | HS256 | HMAC with secret |
 | Expiry | 8 hours | Matches a clinical shift duration |
-| Secret | JWT_SECRET env var | Must be changed from default in production |
+| Secret | JWT_SECRET env var | Must be a strong 32+ character non-default value |
 | Refresh Token | None (Phase-1) | Stateless, no refresh flow |
-| Token Blacklist | None (Phase-1) | Logout is client-side only |
+| Token Blacklist | None (Phase-1) | Logout clears the HttpOnly session cookie |
 
 ## JWT Payload
 
@@ -38,7 +39,7 @@ Authentication and role-based access control for the BCP application.
 
 - Hashing: bcrypt with 12 rounds
 - No password complexity rules enforced in Phase-1 (recommended for production)
-- Default admin password must be changed after initial setup
+- There is no hard-coded default admin password; set `ADMIN_BOOTSTRAP_PASSWORD` or capture the one-time generated seed password
 
 ## Roles
 
@@ -67,10 +68,9 @@ A user can have multiple roles (many-to-many via `bcp_user_role`).
 | POST /api/users/:id/roles | No | No | Yes |
 | GET /api/bcp/sync/status | No | No | Yes |
 | GET /api/bcp/audit | No | No | Yes |
-| POST /api/bcp/audit | No | No | Yes |
 | GET /api/health | Public | Public | Public |
 
 ## Guard Implementation
 
-- **JwtAuthGuard**: Global guard (APP_GUARD). Validates Bearer token on every request. Routes decorated with `@Public()` bypass authentication.
+- **JwtAuthGuard**: Global guard (APP_GUARD). Validates the HttpOnly session cookie first and also accepts Bearer tokens for non-browser clients. Routes decorated with `@Public()` bypass authentication.
 - **RolesGuard**: Global guard (APP_GUARD). Reads `@Roles()` decorator metadata. If no `@Roles()` decorator, any authenticated user is allowed. If roles specified, checks intersection with user's roles from JWT.

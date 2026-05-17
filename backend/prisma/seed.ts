@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -5,6 +6,15 @@ const prisma = new PrismaClient();
 
 const TENANT_ID = process.env.DEFAULT_TENANT_ID || 'default-tenant';
 const BCRYPT_ROUNDS = 12;
+
+function getBootstrapPassword(): string {
+  const configuredPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD?.trim();
+  if (configuredPassword) {
+    return configuredPassword;
+  }
+
+  return randomBytes(24).toString('base64url');
+}
 
 async function main() {
   console.log('Seeding database...');
@@ -38,7 +48,17 @@ async function main() {
     console.log(`  Role: ${role.roleCode} (id=${upserted.id})`);
   }
 
-  const adminPassword = await bcrypt.hash('BcpAdmin@2024', BCRYPT_ROUNDS);
+  const existingAdmin = await prisma.bcpUser.findUnique({
+    where: {
+      uq_user_tenant_username: {
+        tenantId: TENANT_ID,
+        username: 'admin',
+      },
+    },
+  });
+
+  const bootstrapPassword = getBootstrapPassword();
+  const adminPassword = await bcrypt.hash(bootstrapPassword, BCRYPT_ROUNDS);
 
   const adminUser = await prisma.bcpUser.upsert({
     where: {
@@ -57,6 +77,12 @@ async function main() {
     },
   });
   console.log(`  Admin user: ${adminUser.username} (id=${adminUser.id})`);
+  if (!existingAdmin) {
+    console.log(`  Bootstrap admin password: ${bootstrapPassword}`);
+    console.log('  Store this password securely and rotate it after first login.');
+  } else {
+    console.log('  Admin user already exists; existing password preserved.');
+  }
 
   const adminRoleId = createdRoles['ADMIN'];
   await prisma.bcpUserRole.upsert({

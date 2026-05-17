@@ -43,18 +43,4 @@ export class AuditQueryDto {
   limit?: number = 50;
 }
 
-export class CreateAuditDto {
-  @IsString()
-  eventType: string;
 
-  @IsString()
-  @IsOptional()
-  username?: string;
-
-  @IsString()
-  @IsOptional()
-  mrn?: string;
-
-  @IsOptional()
-  additionalData?: any;
-}

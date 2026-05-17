@@ -1,5 +1,6 @@
-import { Controller, Post, Get, Body, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Req, Res, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Public } from '../../common/decorators/public.decorator';
@@ -12,9 +13,23 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto, @Req() req: any) {
-    const tenantId = req.headers['x-tenant-id'] || process.env.DEFAULT_TENANT_ID || 'default-tenant';
-    return { data: await this.authService.login(dto, tenantId) };
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const tenantId = this.getConfiguredTenantId();
+    const authResult = await this.authService.login(dto, tenantId);
+
+    res.cookie('bcp_session', authResult.accessToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 8 * 60 * 60 * 1000,
+      path: '/',
+    });
+
+    return {
+      data: {
+        user: authResult.user,
+      },
+    };
   }
 
   @ApiBearerAuth()
@@ -26,7 +41,24 @@ export class AuthController {
   @ApiBearerAuth()
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout() {
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('bcp_session', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
+
     return { data: { message: 'Logged out successfully' } };
+  }
+
+  private getConfiguredTenantId(): string {
+    const tenantId = process.env.DEFAULT_TENANT_ID?.trim();
+
+    if (!tenantId) {
+      throw new Error('DEFAULT_TENANT_ID must be configured');
+    }
+
+    return tenantId;
   }
 }

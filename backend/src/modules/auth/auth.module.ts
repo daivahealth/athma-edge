@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import type { StringValue } from 'ms';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
@@ -8,12 +9,20 @@ import { AuthService } from './auth.service';
   imports: [
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get('JWT_SECRET', 'change-me-in-production'),
-        signOptions: {
-          expiresIn: config.get('JWT_EXPIRY', '8h'),
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+
+        if (!secret || secret === 'change-me-in-production') {
+          throw new Error('JWT_SECRET must be configured with a strong, non-default value');
+        }
+
+        return {
+          secret,
+          signOptions: {
+            expiresIn: (config.get<string>('JWT_EXPIRY', '8h') || '8h') as StringValue,
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

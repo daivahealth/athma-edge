@@ -1,16 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateUserDto, UpdateUserDto, AssignRolesDto } from './dto/create-user.dto';
-
-const BCRYPT_ROUNDS = 12;
 
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateUserDto, tenantId: string) {
-    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const passwordHash = await bcrypt.hash(dto.password, this.getBcryptRounds());
     const user = await this.prisma.bcpUser.create({
       data: {
         tenantId,
@@ -59,19 +57,34 @@ export class UserService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    await this.prisma.bcpUserRole.deleteMany({
-      where: { userId: BigInt(userId), tenantId },
+    const roles = await this.prisma.bcpRole.findMany({
+      where: {
+        id: { in: dto.roleIds.map((roleId) => BigInt(roleId)) },
+        tenantId,
+        isActive: true,
+      },
+      select: { id: true },
     });
 
-    for (const roleId of dto.roleIds) {
-      await this.prisma.bcpUserRole.create({
-        data: {
-          tenantId,
-          userId: BigInt(userId),
-          roleId: BigInt(roleId),
-        },
-      });
+    if (roles.length !== dto.roleIds.length) {
+      throw new BadRequestException('One or more roles are invalid for this tenant');
     }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.bcpUserRole.deleteMany({
+        where: { userId: BigInt(userId), tenantId },
+      });
+
+      for (const roleId of dto.roleIds) {
+        await tx.bcpUserRole.create({
+          data: {
+            tenantId,
+            userId: BigInt(userId),
+            roleId: BigInt(roleId),
+          },
+        });
+      }
+    });
 
     const updated = await this.prisma.bcpUser.findUnique({
       where: { id: BigInt(userId) },
@@ -88,13 +101,23 @@ export class UserService {
       email: user.email,
       mobileNumber: user.mobileNumber,
       isActive: user.isActive,
-      roles: user.userRoles?.map((ur: any) => ({
-        id: Number(ur.role.id),
-        roleCode: ur.role.roleCode,
-        roleName: ur.role.roleName,
-      })) || [],
+      roles:
+        user.userRoles?.map((ur: any) => ({
+          id: Number(ur.role.id),
+          roleCode: ur.role.roleCode,
+          roleName: ur.role.roleName,
+        })) || [],
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
     };
+  }
+
+  private getBcryptRounds(): number {
+    const parsed = Number.parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
+    if (!Number.isInteger(parsed) || parsed < 10 || parsed > 14) {
+      return 12;
+    }
+
+    return parsed;
   }
 }

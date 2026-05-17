@@ -1,48 +1,30 @@
 import { create } from 'zustand';
-
-interface User {
-  sub: string;
-  username: string;
-  tenantId: string;
-  roles: string[];
-}
+import apiClient from '@/lib/api/client';
+import type { AuthUser } from '@/modules/auth/types';
 
 interface AuthState {
-  token: string | null;
-  user: User | null;
-  setAuth: (token: string, user: User) => void;
+  user: AuthUser | null;
+  hydrated: boolean;
+  setAuth: (user: AuthUser) => void;
   logout: () => void;
-  hydrate: () => void;
+  hydrate: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: null,
   user: null,
-  setAuth: (token, user) => {
-    localStorage.setItem('bcp_token', token);
-    set({ token, user });
+  hydrated: false,
+  setAuth: (user) => {
+    set({ user, hydrated: true });
   },
   logout: () => {
-    localStorage.removeItem('bcp_token');
-    set({ token: null, user: null });
+    set({ user: null, hydrated: true });
   },
-  hydrate: () => {
-    const token = localStorage.getItem('bcp_token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        set({
-          token,
-          user: {
-            sub: payload.sub,
-            username: payload.username,
-            tenantId: payload.tenantId,
-            roles: payload.roles,
-          },
-        });
-      } catch {
-        localStorage.removeItem('bcp_token');
-      }
+  hydrate: async () => {
+    try {
+      const response = await apiClient.get<{ data: AuthUser }>('/auth/me');
+      set({ user: response.data.data, hydrated: true });
+    } catch {
+      set({ user: null, hydrated: true });
     }
   },
 }));

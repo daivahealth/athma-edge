@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
-import { AuditQueryDto, CreateAuditDto } from './dto/audit-query.dto';
+import { AuditQueryDto } from './dto/audit-query.dto';
 
 @Injectable()
 export class AuditService {
@@ -53,18 +53,5 @@ export class AuditService {
       })),
       meta: { page, limit, total },
     };
-  }
-
-  async create(dto: CreateAuditDto, tenantId: string) {
-    const entry = await this.prisma.bcpAuditLog.create({
-      data: {
-        tenantId,
-        eventType: dto.eventType as any,
-        username: dto.username,
-        mrn: dto.mrn,
-        additionalData: dto.additionalData,
-      },
-    });
-    return { id: Number(entry.id), eventType: entry.eventType };
   }
 }
