@@ -45,6 +45,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
+    "@types/ms": "^2.1.0",
     "@types/node": "^22.10.0",
     "prisma": "^6.2.0",
     "ts-node": "^10.9.2",
