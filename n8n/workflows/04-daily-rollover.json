@@ -1,0 +1,35 @@
+{
+  "name": "BCP - Daily Rollover",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 0 * * *" }]
+        }
+      },
+      "name": "Midnight Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Mark OP/DAYCARE/EMERGENCY patients from previous business dates as inactive\nUPDATE bcp_active_patient\nSET is_active = false,\n    active_until = NOW()\nWHERE is_active = true\n  AND care_setting IN ('OUTPATIENT', 'DAYCARE', 'EMERGENCY')\n  AND business_date < CURRENT_DATE\n  AND tenant_id = '{{ $env.DEFAULT_TENANT_ID }}';\n\n-- Update business_date for still-active inpatients\nUPDATE bcp_active_patient\nSET business_date = CURRENT_DATE\nWHERE is_active = true\n  AND care_setting = 'INPATIENT'\n  AND business_date < CURRENT_DATE\n  AND tenant_id = '{{ $env.DEFAULT_TENANT_ID }}';",
+        "additionalFields": {}
+      },
+      "name": "Rollover Logic",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [470, 300],
+      "credentials": {
+        "postgres": { "id": "BCP_DB_CREDENTIAL_ID", "name": "BCP Edge DB" }
+      }
+    }
+  ],
+  "connections": {
+    "Midnight Trigger": { "main": [[{ "node": "Rollover Logic", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "BCP Sync" }]
+}

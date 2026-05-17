@@ -1,0 +1,65 @@
+{
+  "name": "BCP - Active Patient Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "seconds", "secondsInterval": 60 }]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- TODO: Replace with actual source HIS query\n-- This is a template. Connect to your source HIS database.\n-- Query should return active patients:\n--   INPATIENT: all currently admitted\n--   OUTPATIENT: today's checked-in/registered/arrived/active only\n--   DAYCARE: today's active\n--   EMERGENCY: today's active\nSELECT\n  mrn, uhid, patient_name, date_of_birth, gender, blood_group,\n  mobile_number, care_setting, ward_name, bed_number, room_number,\n  attending_consultant_id, consultant_name, admission_date,\n  discharge_date, visit_number, encounter_id, patient_id,\n  source_system, chief_complaint, primary_diagnosis\nFROM active_patients_view\nWHERE modified_at > NOW() - INTERVAL '2 minutes'",
+        "additionalFields": {}
+      },
+      "name": "Source HIS Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [470, 300],
+      "credentials": {
+        "postgres": { "id": "SOURCE_HIS_CREDENTIAL_ID", "name": "Source HIS DB" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO bcp_active_patient (\n  tenant_id, source_system, mrn, uhid, patient_name,\n  date_of_birth, gender, blood_group, mobile_number,\n  care_setting, ward_name, bed_number, room_number,\n  attending_consultant_id, consultant_name, admission_date,\n  discharge_date, visit_number, encounter_id, patient_id,\n  chief_complaint, primary_diagnosis, is_active,\n  business_date, last_synced_at\n) VALUES (\n  '{{ $env.DEFAULT_TENANT_ID }}',\n  '{{ $json.source_system }}',\n  '{{ $json.mrn }}',\n  '{{ $json.uhid }}',\n  '{{ $json.patient_name }}',\n  {{ $json.date_of_birth ? \"'\" + $json.date_of_birth + \"'\" : 'NULL' }},\n  {{ $json.gender ? \"'\" + $json.gender + \"'\" : 'NULL' }},\n  {{ $json.blood_group ? \"'\" + $json.blood_group + \"'\" : 'NULL' }},\n  {{ $json.mobile_number ? \"'\" + $json.mobile_number + \"'\" : 'NULL' }},\n  '{{ $json.care_setting }}',\n  {{ $json.ward_name ? \"'\" + $json.ward_name + \"'\" : 'NULL' }},\n  {{ $json.bed_number ? \"'\" + $json.bed_number + \"'\" : 'NULL' }},\n  {{ $json.room_number ? \"'\" + $json.room_number + \"'\" : 'NULL' }},\n  {{ $json.attending_consultant_id ? \"'\" + $json.attending_consultant_id + \"'\" : 'NULL' }},\n  {{ $json.consultant_name ? \"'\" + $json.consultant_name + \"'\" : 'NULL' }},\n  {{ $json.admission_date ? \"'\" + $json.admission_date + \"'\" : 'NULL' }},\n  {{ $json.discharge_date ? \"'\" + $json.discharge_date + \"'\" : 'NULL' }},\n  '{{ $json.visit_number }}',\n  {{ $json.encounter_id ? \"'\" + $json.encounter_id + \"'\" : 'NULL' }},\n  {{ $json.patient_id ? \"'\" + $json.patient_id + \"'\" : 'NULL' }},\n  {{ $json.chief_complaint ? \"'\" + $json.chief_complaint + \"'\" : 'NULL' }},\n  {{ $json.primary_diagnosis ? \"'\" + $json.primary_diagnosis + \"'\" : 'NULL' }},\n  true,\n  CURRENT_DATE,\n  NOW()\n)\nON CONFLICT (tenant_id, source_system, mrn, visit_number)\nDO UPDATE SET\n  patient_name = EXCLUDED.patient_name,\n  ward_name = EXCLUDED.ward_name,\n  bed_number = EXCLUDED.bed_number,\n  room_number = EXCLUDED.room_number,\n  consultant_name = EXCLUDED.consultant_name,\n  discharge_date = EXCLUDED.discharge_date,\n  chief_complaint = EXCLUDED.chief_complaint,\n  primary_diagnosis = EXCLUDED.primary_diagnosis,\n  is_active = true,\n  last_synced_at = NOW();",
+        "additionalFields": {}
+      },
+      "name": "Upsert BCP Patient",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [690, 300],
+      "credentials": {
+        "postgres": { "id": "BCP_DB_CREDENTIAL_ID", "name": "BCP Edge DB" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE bcp_sync_status SET\n  sync_status = 'SUCCESS',\n  last_sync_completed_at = NOW(),\n  last_success_at = NOW(),\n  records_synced = {{ $items().length }},\n  error_message = NULL\nWHERE sync_component = 'ACTIVE_PATIENT'\n  AND tenant_id = '{{ $env.DEFAULT_TENANT_ID }}';",
+        "additionalFields": {}
+      },
+      "name": "Update Sync Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [910, 300],
+      "credentials": {
+        "postgres": { "id": "BCP_DB_CREDENTIAL_ID", "name": "BCP Edge DB" }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Source HIS Query", "type": "main", "index": 0 }]] },
+    "Source HIS Query": { "main": [[{ "node": "Upsert BCP Patient", "type": "main", "index": 0 }]] },
+    "Upsert BCP Patient": { "main": [[{ "node": "Update Sync Status", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "BCP Sync" }]
+}

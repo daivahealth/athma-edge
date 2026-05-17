@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum CareSetting {
+  INPATIENT
+  OUTPATIENT
+  DAYCARE
+  EMERGENCY
+
+  @@map("care_setting_enum")
+}
+
+enum DocumentType {
+  CLINICAL_SUMMARY
+  LAB_REPORT
+  RADIOLOGY_REPORT
+  MAR
+  NURSING_NOTE
+  DISCHARGE_SUMMARY
+  CONSENT
+  OTHER
+
+  @@map("document_type_enum")
+}
+
+enum SyncComponent {
+  ACTIVE_PATIENT
+  CLINICAL_PROFILE
+  PDF_DOCUMENT
+
+  @@map("sync_component_enum")
+}
+
+enum SyncStatus {
+  SUCCESS
+  FAILED
+  PARTIAL
+  RUNNING
+
+  @@map("sync_status_enum")
+}
+
+enum EventType {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  PATIENT_SEARCHED
+  PATIENT_VIEWED
+  PDF_VIEWED
+  LOGOUT
+
+  @@map("event_type_enum")
+}
+
+// ─── bcp_active_patient ──────────────────────────────────────────────────────
+
+model BcpActivePatient {
+  id                  BigInt       @id @default(autoincrement())
+  tenantId            String       @map("tenant_id") @db.VarChar(100)
+  sourceSystem        String       @map("source_system") @db.VarChar(100)
+  patientId           String?      @map("patient_id") @db.VarChar(100)
+  mrn                 String       @db.VarChar(50)
+  uhid                String?      @db.VarChar(50)
+  encounterId         String?      @map("encounter_id") @db.VarChar(100)
+  visitNumber         String?      @map("visit_number") @db.VarChar(50)
+  patientName         String       @map("patient_name") @db.VarChar(255)
+  dateOfBirth         DateTime?    @map("date_of_birth") @db.Date
+  age                 String?      @db.VarChar(20)
+  gender              String?      @db.VarChar(20)
+  mobileNumber        String?      @map("mobile_number") @db.VarChar(30)
+  careSetting         CareSetting  @map("care_setting")
+  encounterStatus     String?      @map("encounter_status") @db.VarChar(50)
+  appointmentStatus   String?      @map("appointment_status") @db.VarChar(50)
+  businessDate        DateTime     @map("business_date") @db.Date
+  unitName            String?      @map("unit_name") @db.VarChar(100)
+  wardName            String?      @map("ward_name") @db.VarChar(100)
+  bedNumber           String?      @map("bed_number") @db.VarChar(50)
+  consultantId        String?      @map("consultant_id") @db.VarChar(100)
+  consultantName      String?      @map("consultant_name") @db.VarChar(255)
+  admissionDatetime   DateTime?    @map("admission_datetime") @db.Timestamp(6)
+  visitStartDatetime  DateTime?    @map("visit_start_datetime") @db.Timestamp(6)
+  dischargeDatetime   DateTime?    @map("discharge_datetime") @db.Timestamp(6)
+  isMlc               Boolean      @default(false) @map("is_mlc")
+  isActive            Boolean      @default(true) @map("is_active")
+  activeFrom          DateTime?    @map("active_from") @db.Timestamp(6)
+  activeUntil         DateTime?    @map("active_until") @db.Timestamp(6)
+  lastSeenInSourceAt  DateTime?    @map("last_seen_in_source_at") @db.Timestamp(6)
+  lastSyncedAt        DateTime     @map("last_synced_at") @db.Timestamp(6)
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@unique([tenantId, sourceSystem, mrn, visitNumber], name: "uq_active_patient_tenant_source_mrn_visit")
+  @@index([mrn], name: "idx_active_patient_mrn")
+  @@index([uhid], name: "idx_active_patient_uhid")
+  @@index([patientName], name: "idx_active_patient_name")
+  @@index([careSetting], name: "idx_active_patient_care_setting")
+  @@index([businessDate], name: "idx_active_patient_business_date")
+  @@index([isActive], name: "idx_active_patient_is_active")
+  @@index([wardName, bedNumber], name: "idx_active_patient_ward_bed")
+  @@map("bcp_active_patient")
+}
+
+// ─── bcp_patient_clinical_profile ────────────────────────────────────────────
+
+model BcpPatientClinicalProfile {
+  id                    BigInt    @id @default(autoincrement())
+  tenantId              String    @map("tenant_id") @db.VarChar(100)
+  sourceSystem          String    @map("source_system") @db.VarChar(100)
+  patientId             String?   @map("patient_id") @db.VarChar(100)
+  mrn                   String    @db.VarChar(50)
+  uhid                  String?   @db.VarChar(50)
+  encounterId           String?   @map("encounter_id") @db.VarChar(100)
+  visitNumber           String?   @map("visit_number") @db.VarChar(50)
+  allergies             String?   @db.Text
+  bloodGroup            String?   @map("blood_group") @db.VarChar(20)
+  primaryDiagnosis      String?   @map("primary_diagnosis") @db.Text
+  highRiskFlags         String?   @map("high_risk_flags") @db.Text
+  latestVitals          Json?     @map("latest_vitals")
+  activeMedications     Json?     @map("active_medications")
+  pendingInvestigations Json?     @map("pending_investigations")
+  criticalResults       String?   @map("critical_results") @db.Text
+  handoverNotes         String?   @map("handover_notes") @db.Text
+  lastClinicalUpdateAt  DateTime? @map("last_clinical_update_at") @db.Timestamp(6)
+  lastSyncedAt          DateTime  @map("last_synced_at") @db.Timestamp(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([mrn], name: "idx_clinical_profile_mrn")
+  @@index([encounterId], name: "idx_clinical_profile_encounter_id")
+  @@map("bcp_patient_clinical_profile")
+}
+
+// ─── bcp_patient_pdf_document ────────────────────────────────────────────────
+
+model BcpPatientPdfDocument {
+  id               BigInt       @id @default(autoincrement())
+  tenantId         String       @map("tenant_id") @db.VarChar(100)
+  sourceSystem     String       @map("source_system") @db.VarChar(100)
+  patientId        String?      @map("patient_id") @db.VarChar(100)
+  mrn              String       @db.VarChar(50)
+  uhid             String?      @db.VarChar(50)
+  encounterId      String?      @map("encounter_id") @db.VarChar(100)
+  visitNumber      String?      @map("visit_number") @db.VarChar(50)
+  documentType     DocumentType @map("document_type")
+  documentName     String?      @map("document_name") @db.VarChar(255)
+  filePath         String       @map("file_path") @db.Text
+  mimeType         String       @default("application/pdf") @map("mime_type") @db.VarChar(100)
+  documentDatetime DateTime?    @map("document_datetime") @db.Timestamp(6)
+  fileSize         BigInt?      @map("file_size")
+  checksum         String?      @db.VarChar(255)
+  isActive         Boolean      @default(true) @map("is_active")
+  lastSyncedAt     DateTime     @map("last_synced_at") @db.Timestamp(6)
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([mrn], name: "idx_pdf_document_mrn")
+  @@index([documentType], name: "idx_pdf_document_type")
+  @@map("bcp_patient_pdf_document")
+}
+
+// ─── bcp_sync_status ─────────────────────────────────────────────────────────
+
+model BcpSyncStatus {
+  id                   BigInt        @id @default(autoincrement())
+  tenantId             String?       @map("tenant_id") @db.VarChar(100)
+  sourceSystem         String?       @map("source_system") @db.VarChar(100)
+  syncComponent        SyncComponent @map("sync_component")
+  syncStatus           SyncStatus    @map("sync_status")
+  lastSuccessfulSyncAt DateTime?     @map("last_successful_sync_at") @db.Timestamp(6)
+  lastAttemptAt        DateTime?     @map("last_attempt_at") @db.Timestamp(6)
+  recordsProcessed     BigInt        @default(0) @map("records_processed")
+  recordsFailed        BigInt        @default(0) @map("records_failed")
+  syncCursor           String?       @map("sync_cursor") @db.VarChar(255)
+  errorMessage         String?       @map("error_message") @db.Text
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@unique([tenantId, syncComponent], name: "uq_sync_status_tenant_component")
+  @@index([syncComponent], name: "idx_sync_status_component")
+  @@map("bcp_sync_status")
+}
+
+// ─── bcp_audit_log ───────────────────────────────────────────────────────────
+
+model BcpAuditLog {
+  id             BigInt    @id @default(autoincrement())
+  tenantId       String    @map("tenant_id") @db.VarChar(100)
+  sourceSystem   String?   @map("source_system") @db.VarChar(100)
+  eventType      EventType @map("event_type")
+  patientId      String?   @map("patient_id") @db.VarChar(100)
+  mrn            String?   @db.VarChar(50)
+  encounterId    String?   @map("encounter_id") @db.VarChar(100)
+  username       String?   @db.VarChar(255)
+  userRole       String?   @map("user_role") @db.VarChar(100)
+  deviceId       String?   @map("device_id") @db.VarChar(255)
+  ipAddress      String?   @map("ip_address") @db.VarChar(100)
+  eventTimestamp  DateTime  @default(now()) @map("event_timestamp") @db.Timestamp(6)
+  additionalData Json?     @map("additional_data")
+
+  @@index([eventType], name: "idx_audit_log_event_type")
+  @@index([eventTimestamp], name: "idx_audit_log_event_timestamp")
+  @@map("bcp_audit_log")
+}
+
+// ─── bcp_user ────────────────────────────────────────────────────────────────
+
+model BcpUser {
+  id           BigInt        @id @default(autoincrement())
+  tenantId     String        @map("tenant_id") @db.VarChar(100)
+  username     String        @db.VarChar(100)
+  passwordHash String        @map("password_hash") @db.Text
+  fullName     String?       @map("full_name") @db.VarChar(255)
+  email        String?       @db.VarChar(255)
+  mobileNumber String?       @map("mobile_number") @db.VarChar(30)
+  isActive     Boolean       @default(true) @map("is_active")
+  lastLoginAt  DateTime?     @map("last_login_at") @db.Timestamp(6)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  userRoles    BcpUserRole[]
+
+  @@unique([tenantId, username], name: "uq_user_tenant_username")
+  @@index([tenantId, username], name: "idx_user_tenant_username")
+  @@map("bcp_user")
+}
+
+// ─── bcp_role ────────────────────────────────────────────────────────────────
+
+model BcpRole {
+  id        BigInt        @id @default(autoincrement())
+  tenantId  String        @map("tenant_id") @db.VarChar(100)
+  roleCode  String        @map("role_code") @db.VarChar(50)
+  roleName  String        @map("role_name") @db.VarChar(100)
+  isActive  Boolean       @default(true) @map("is_active")
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  userRoles BcpUserRole[]
+
+  @@unique([tenantId, roleCode], name: "uq_role_tenant_role_code")
+  @@index([tenantId, roleCode], name: "idx_role_tenant_role_code")
+  @@map("bcp_role")
+}
+
+// ─── bcp_user_role ───────────────────────────────────────────────────────────
+
+model BcpUserRole {
+  id        BigInt   @id @default(autoincrement())
+  tenantId  String   @map("tenant_id") @db.VarChar(100)
+  userId    BigInt   @map("user_id")
+  roleId    BigInt   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user BcpUser @relation(fields: [userId], references: [id])
+  role BcpRole @relation(fields: [roleId], references: [id])
+
+  @@unique([tenantId, userId, roleId], name: "uq_user_role_tenant_user_role")
+  @@map("bcp_user_role")
+}

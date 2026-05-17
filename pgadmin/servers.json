@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Athma Edge BCP",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "athma_edge",
+      "Username": "bcpuser",
+      "SSLMode": "prefer"
+    }
+  }
+}
