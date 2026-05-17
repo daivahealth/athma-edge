@@ -59,7 +59,7 @@ docker compose ps
 # Run Prisma migrations
 docker compose exec bcp-api npx prisma migrate deploy
 
-# Seed roles and admin user
+# Seed roles and bootstrap admin user
 docker compose exec bcp-api npx prisma db seed
 ```
 
@@ -76,8 +76,15 @@ docker compose ps
 ### 6. First Login
 
 1. Open http://localhost in a browser
-2. Login with: `admin` / `BcpAdmin@2024`
-3. Change the admin password immediately
+2. Login with username `admin`
+3. Use the bootstrap password you explicitly set via `ADMIN_BOOTSTRAP_PASSWORD`, or the one-time generated password printed by the seed command
+4. Change the admin password immediately
+
+Important:
+
+- There is no longer a hard-coded default admin password.
+- Do not leave `JWT_SECRET`, `POSTGRES_PASSWORD`, or `N8N_BASIC_AUTH_PASSWORD` at placeholder values.
+- API sessions are now stored in an HttpOnly cookie instead of browser localStorage.
 
 ### 7. Configure n8n Workflows
 

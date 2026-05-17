@@ -1,4 +1,14 @@
-import { IsNotEmpty, IsString, IsOptional, IsEmail, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsEmail,
+  MinLength,
+  IsArray,
+  ArrayNotEmpty,
+  IsInt,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -22,7 +32,7 @@ export class CreateUserDto {
   @IsOptional()
   email?: string;
 
-  @ApiPropertyOptional({ example: '+971501234567' })
+  @ApiPropertyOptional({ example: '+971****4567' })
   @IsString()
   @IsOptional()
   mobileNumber?: string;
@@ -51,6 +61,9 @@ export class UpdateUserDto {
 
 export class AssignRolesDto {
   @ApiProperty({ example: [1, 2] })
-  @IsNotEmpty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @Type(() => Number)
+  @IsInt({ each: true })
   roleIds: number[];
 }

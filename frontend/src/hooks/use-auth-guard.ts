@@ -6,20 +6,19 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 
 export function useAuthGuard() {
   const router = useRouter();
-  const { token, user, hydrate } = useAuthStore();
+  const { user, hydrated, hydrate } = useAuthStore();
 
   useEffect(() => {
-    hydrate();
+    void hydrate();
   }, [hydrate]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('bcp_token');
-    if (!stored) {
+    if (hydrated && !user) {
       router.replace('/login');
     }
-  }, [token, router]);
+  }, [hydrated, user, router]);
 
-  return { user, isAuthenticated: !!token };
+  return { user, isAuthenticated: hydrated && !!user, isLoading: !hydrated };
 }
 
 export function useRoleGuard(requiredRoles: string[]) {

@@ -4,10 +4,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-bcpuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bcppass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       POSTGRES_DB: ${POSTGRES_DB:-athma_edge}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
@@ -23,15 +23,15 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-bcpuser}:${POSTGRES_PASSWORD:-bcppass}@postgres:5432/${POSTGRES_DB:-athma_edge}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bcpuser}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-athma_edge}?schema=public
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
       JWT_EXPIRY: ${JWT_EXPIRY:-8h}
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-DEFAULT}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:?DEFAULT_TENANT_ID must be set}
       PDF_STORAGE_PATH: /data/pdfs
       PORT: 3100
-    ports:
-      - '3100:3100'
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost}
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
     volumes:
       - ./local-bcp-storage/pdfs:/data/pdfs
     depends_on:
@@ -45,8 +45,6 @@ services:
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: http://bcp-api:3100
-    ports:
-      - '3000:3000'
     depends_on:
       - bcp-api
 
@@ -59,12 +57,12 @@ services:
       DB_POSTGRESDB_PORT: 5432
       DB_POSTGRESDB_DATABASE: n8n
       DB_POSTGRESDB_USER: ${POSTGRES_USER:-bcpuser}
-      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-bcppass}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       N8N_BASIC_AUTH_ACTIVE: 'true'
       N8N_BASIC_AUTH_USER: ${N8N_USER:-admin}
-      N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD:-n8nAdmin@2024}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD:?N8N_PASSWORD must be set}
     ports:
-      - '5678:5678'
+      - '127.0.0.1:5678:5678'
     volumes:
       - n8n_data:/home/node/.n8n
     depends_on:

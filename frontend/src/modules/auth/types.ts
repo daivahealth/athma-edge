@@ -3,22 +3,19 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
-  data: {
-    accessToken: string;
-    user: {
-      id: number;
-      username: string;
-      fullName: string | null;
-      tenantId: string;
-      roles: string[];
-    };
-  };
-}
-
-export interface UserProfile {
-  sub: string;
+export interface AuthUser {
+  id: number;
   username: string;
+  fullName: string | null;
+  email?: string | null;
   tenantId: string;
   roles: string[];
+  isActive?: boolean;
+  lastLoginAt?: string | null;
+}
+
+export interface LoginResponse {
+  data: {
+    user: AuthUser;
+  };
 }

@@ -24,13 +24,7 @@ export default function LoginPage() {
 
     try {
       const response = await authService.login({ username, password });
-      const { accessToken, user } = response.data;
-      setAuth(accessToken, {
-        sub: String(user.id),
-        username: user.username,
-        tenantId: user.tenantId,
-        roles: user.roles,
-      });
+      setAuth(response.data.user);
       router.replace('/patients');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Check your credentials.');
@@ -80,9 +74,7 @@ export default function LoginPage() {
                   required
                 />
               </div>
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>
