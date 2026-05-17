@@ -105,7 +105,7 @@ export default function ClinicalProfilePage() {
               {cp?.lastSyncedAt && <SyncTimestamp lastSyncedAt={cp.lastSyncedAt} />}
             </CardHeader>
             <CardContent>
-              <JsonDisplay data={cp?.latestVitals} emptyText="No vitals data available." />
+              <VitalsDisplay data={cp?.latestVitals} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -114,9 +114,10 @@ export default function ClinicalProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Active Medications</CardTitle>
+              {cp?.lastSyncedAt && <SyncTimestamp lastSyncedAt={cp.lastSyncedAt} />}
             </CardHeader>
             <CardContent>
-              <JsonDisplay data={cp?.activeMedications} emptyText="No medication data available." />
+              <MedicationTable data={cp?.activeMedications} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -125,9 +126,10 @@ export default function ClinicalProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Pending Investigations</CardTitle>
+              {cp?.lastSyncedAt && <SyncTimestamp lastSyncedAt={cp.lastSyncedAt} />}
             </CardHeader>
             <CardContent>
-              <JsonDisplay data={cp?.pendingInvestigations} emptyText="No investigation data available." />
+              <InvestigationTable data={cp?.pendingInvestigations} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -185,19 +187,88 @@ function InfoItem({ label, value }: { label: string; value: string | null | unde
   );
 }
 
-function JsonDisplay({ data, emptyText }: { data: Record<string, any> | null | undefined; emptyText: string }) {
+function VitalsDisplay({ data }: { data: Record<string, any> | null | undefined }) {
   if (!data || Object.keys(data).length === 0) {
-    return <p className="py-4 text-center text-muted-foreground">{emptyText}</p>;
+    return <p className="py-4 text-center text-muted-foreground">No vitals data available.</p>;
+  }
+
+  const { recordedAt, ...vitals } = data;
+
+  return (
+    <div className="space-y-3">
+      {recordedAt && (
+        <p className="text-xs text-muted-foreground">Recorded: {formatDateTime(recordedAt)}</p>
+      )}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {Object.entries(vitals).map(([key, value]) => (
+          <div key={key} className="rounded-lg border bg-muted/30 px-3 py-2">
+            <p className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}</p>
+            <p className="text-sm font-semibold">{String(value)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MedicationTable({ data }: { data: any[] | null | undefined }) {
+  if (!data || data.length === 0) {
+    return <p className="py-4 text-center text-muted-foreground">No medication data available.</p>;
   }
 
   return (
-    <div className="space-y-2">
-      {Object.entries(data).map(([key, value]) => (
-        <div key={key} className="flex justify-between rounded border px-3 py-2 text-sm">
-          <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}</span>
-          <span className="text-muted-foreground">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
-        </div>
-      ))}
-    </div>
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b text-left text-muted-foreground">
+          <th className="pb-3 pr-4 font-medium">Medication</th>
+          <th className="pb-3 pr-4 font-medium">Dose</th>
+          <th className="pb-3 pr-4 font-medium">Route</th>
+          <th className="pb-3 font-medium">Frequency</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((med, i) => (
+          <tr key={i} className="border-b last:border-0">
+            <td className="py-3 pr-4 font-medium">{med.name || '—'}</td>
+            <td className="py-3 pr-4">{med.dose || '—'}</td>
+            <td className="py-3 pr-4">
+              <Badge variant="secondary">{med.route || '—'}</Badge>
+            </td>
+            <td className="py-3">{med.frequency || '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function InvestigationTable({ data }: { data: any[] | null | undefined }) {
+  if (!data || data.length === 0) {
+    return <p className="py-4 text-center text-muted-foreground">No investigation data available.</p>;
+  }
+
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b text-left text-muted-foreground">
+          <th className="pb-3 pr-4 font-medium">Test</th>
+          <th className="pb-3 pr-4 font-medium">Status</th>
+          <th className="pb-3 font-medium">Ordered At</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((inv, i) => (
+          <tr key={i} className="border-b last:border-0">
+            <td className="py-3 pr-4 font-medium">{inv.test || inv.name || '—'}</td>
+            <td className="py-3 pr-4">
+              <Badge variant={inv.status === 'Pending' ? 'warning' : inv.status === 'Sent' ? 'secondary' : 'outline'}>
+                {inv.status || '—'}
+              </Badge>
+            </td>
+            <td className="py-3 text-muted-foreground">{inv.orderedAt ? formatDateTime(inv.orderedAt) : '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
