@@ -46,7 +46,7 @@ export default function UserManagementPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">User Management</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">User Management</h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -90,38 +90,38 @@ export default function UserManagementPage() {
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="pb-3 pr-4 font-medium">Username</th>
-                  <th className="pb-3 pr-4 font-medium">Full Name</th>
-                  <th className="pb-3 pr-4 font-medium">Email</th>
-                  <th className="pb-3 pr-4 font-medium">Roles</th>
-                  <th className="pb-3 pr-4 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Created</th>
-                  <th className="pb-3 font-medium">Actions</th>
+                <tr className="border-b bg-muted/30 text-left">
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Username</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Full Name</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Roles</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Created</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {(Array.isArray(data?.data) ? data.data : []).map((user) => {
                   const roleCodes = user.roles.map((r: any) => typeof r === 'string' ? r : r.roleCode);
                   return (
-                    <tr key={user.id} className="border-b last:border-0">
-                      <td className="py-3 pr-4 font-medium">{user.username}</td>
-                      <td className="py-3 pr-4">{user.fullName || '—'}</td>
-                      <td className="py-3 pr-4">{user.email || '—'}</td>
-                      <td className="py-3 pr-4">
+                    <tr key={user.id} className="border-b last:border-0 transition-colors hover:bg-muted/40">
+                      <td className="px-4 py-3 font-medium">{user.username}</td>
+                      <td className="px-4 py-3">{user.fullName || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{user.email || '—'}</td>
+                      <td className="px-4 py-3">
                         <div className="flex gap-1">
                           {roleCodes.map((r: string) => (
                             <Badge key={r} variant="secondary">{r}</Badge>
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="px-4 py-3">
                         <Badge variant={user.isActive ? 'success' : 'destructive'}>
                           {user.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
-                      <td className="py-3 pr-4 text-xs">{formatDateTime(user.createdAt)}</td>
-                      <td className="py-3">
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{formatDateTime(user.createdAt)}</td>
+                      <td className="px-4 py-3">
                         <Button
                           size="sm"
                           variant="outline"

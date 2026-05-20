@@ -16,11 +16,11 @@ export function BcpBanner() {
         : 'bg-red-600';
 
   return (
-    <div className={cn('flex items-center justify-center gap-2 px-4 py-1.5 text-sm font-semibold text-white', bgColor)}>
-      <AlertTriangle className="h-4 w-4" />
-      <span>BCP LOCAL MODE — This is offline clinical data. Do not use for real-time decisions.</span>
+    <div className={cn('flex items-center justify-center gap-2 px-4 py-2 text-[13px] font-semibold tracking-wide text-white', bgColor)}>
+      <AlertTriangle className="h-3.5 w-3.5" />
+      <span>BCP LOCAL MODE — Offline clinical data only. Do not use for real-time decisions.</span>
       {overall !== 'HEALTHY' && (
-        <span className="ml-2 rounded bg-white/20 px-2 py-0.5 text-xs">
+        <span className="ml-2 rounded-md bg-white/20 px-2 py-0.5 text-[11px] font-medium">
           Sync: {overall}
         </span>
       )}

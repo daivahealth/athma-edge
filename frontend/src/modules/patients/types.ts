@@ -15,6 +15,7 @@ export interface Patient {
   uhid: string | null;
   patientName: string;
   dateOfBirth: string | null;
+  age: string | null;
   gender: string | null;
   mobileNumber: string | null;
   careSetting: string;
@@ -26,6 +27,7 @@ export interface Patient {
   visitNumber: string | null;
   isActive: boolean;
   lastSyncedAt: string;
+  sourceSystem?: string;
 }
 
 export interface PatientSearchResponse {
@@ -59,3 +61,17 @@ export interface PdfDocument {
   fileSize: number | null;
   lastSyncedAt: string;
 }
+
+export interface CreateTempPatientRequest {
+  patientName: string;
+  gender?: string;
+  dateOfBirth?: string;
+  age?: string;
+  mobileNumber?: string;
+  careSetting: string;
+  wardName?: string;
+  bedNumber?: string;
+  consultantName?: string;
+}
+
+export type UpdateTempPatientRequest = Partial<CreateTempPatientRequest>;

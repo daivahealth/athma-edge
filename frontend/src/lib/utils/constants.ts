@@ -8,6 +8,8 @@ export const CARE_SETTING_LABELS: Record<CareSetting, string> = {
   EMERGENCY: 'Emergency',
 };
 
+export const BCP_LOCAL_SOURCE = 'BCP_LOCAL' as const;
+
 export const EVENT_TYPES = [
   'LOGIN_SUCCESS',
   'LOGIN_FAILED',
@@ -15,6 +17,9 @@ export const EVENT_TYPES = [
   'PATIENT_VIEWED',
   'PDF_VIEWED',
   'LOGOUT',
+  'BCP_NOTE_CREATED',
+  'TEMP_PATIENT_CREATED',
+  'TEMP_PATIENT_UPDATED',
 ] as const;
 
 export const ROLES = ['DOCTOR', 'NURSE', 'ADMIN'] as const;

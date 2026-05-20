@@ -9,6 +9,7 @@ import { ClinicalProfileModule } from './modules/clinical-profile/clinical-profi
 import { DocumentModule } from './modules/document/document.module';
 import { SyncStatusModule } from './modules/sync-status/sync-status.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { ClinicalNoteModule } from './modules/clinical-note/clinical-note.module';
 import { HealthModule } from './modules/health/health.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -25,6 +26,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     DocumentModule,
     SyncStatusModule,
     AuditModule,
+    ClinicalNoteModule,
     HealthModule,
   ],
   providers: [

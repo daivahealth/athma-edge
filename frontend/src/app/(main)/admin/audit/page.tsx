@@ -33,13 +33,13 @@ export default function AuditLogPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Audit Log</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Audit Log</h1>
 
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap items-end gap-4">
             <div className="w-48">
-              <label className="mb-1 block text-sm font-medium">Event Type</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Event Type</label>
               <Select
                 value={params.eventType || 'ALL'}
                 onValueChange={(v) => setParams((p) => ({ ...p, eventType: v === 'ALL' ? undefined : v, page: 1 }))}
@@ -58,7 +58,7 @@ export default function AuditLogPage() {
               </Select>
             </div>
             <div className="w-40">
-              <label className="mb-1 block text-sm font-medium">Username</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Username</label>
               <Input
                 placeholder="Filter by user"
                 value={params.username || ''}
@@ -66,7 +66,7 @@ export default function AuditLogPage() {
               />
             </div>
             <div className="w-40">
-              <label className="mb-1 block text-sm font-medium">MRN</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">MRN</label>
               <Input
                 placeholder="Filter by MRN"
                 value={params.mrn || ''}
@@ -74,7 +74,7 @@ export default function AuditLogPage() {
               />
             </div>
             <div className="w-40">
-              <label className="mb-1 block text-sm font-medium">From</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">From</label>
               <Input
                 type="date"
                 value={params.dateFrom || ''}
@@ -82,7 +82,7 @@ export default function AuditLogPage() {
               />
             </div>
             <div className="w-40">
-              <label className="mb-1 block text-sm font-medium">To</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">To</label>
               <Input
                 type="date"
                 value={params.dateTo || ''}
@@ -110,28 +110,28 @@ export default function AuditLogPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="pb-3 pr-4 font-medium">Timestamp</th>
-                    <th className="pb-3 pr-4 font-medium">Event</th>
-                    <th className="pb-3 pr-4 font-medium">Username</th>
-                    <th className="pb-3 pr-4 font-medium">MRN</th>
-                    <th className="pb-3 pr-4 font-medium">IP Address</th>
-                    <th className="pb-3 font-medium">Details</th>
+                  <tr className="border-b bg-muted/30 text-left">
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Timestamp</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Event</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Username</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">MRN</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">IP Address</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Details</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data?.data.map((entry) => (
-                    <tr key={entry.id} className="border-b last:border-0">
-                      <td className="py-3 pr-4 text-xs">{formatDateTime(entry.eventTimestamp)}</td>
-                      <td className="py-3 pr-4">
+                    <tr key={entry.id} className="border-b last:border-0 transition-colors hover:bg-muted/40">
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{formatDateTime(entry.eventTimestamp)}</td>
+                      <td className="px-4 py-3">
                         <Badge variant={eventBadgeVariant[entry.eventType] || 'outline'}>
                           {entry.eventType.replace(/_/g, ' ')}
                         </Badge>
                       </td>
-                      <td className="py-3 pr-4">{entry.username || '—'}</td>
-                      <td className="py-3 pr-4">{entry.mrn || '—'}</td>
-                      <td className="py-3 pr-4 text-xs">{entry.ipAddress || '—'}</td>
-                      <td className="py-3 text-xs text-muted-foreground">
+                      <td className="px-4 py-3 font-medium">{entry.username || '—'}</td>
+                      <td className="px-4 py-3">{entry.mrn || '—'}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{entry.ipAddress || '—'}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
                         {entry.additionalData ? JSON.stringify(entry.additionalData) : '—'}
                       </td>
                     </tr>

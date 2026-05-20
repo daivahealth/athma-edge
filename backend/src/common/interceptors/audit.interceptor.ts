@@ -48,6 +48,9 @@ export class AuditInterceptor implements NestInterceptor {
         if (eventType === 'PDF_VIEWED') {
           additionalData.documentId = documentId;
         }
+        if (eventType === 'BCP_NOTE_CREATED') {
+          additionalData.noteType = request.body?.noteType || null;
+        }
 
         this.logAudit(
           tenantId,
@@ -68,6 +71,9 @@ export class AuditInterceptor implements NestInterceptor {
     if (method === 'GET' && path.includes('/bcp/patients/search')) return 'PATIENT_SEARCHED';
     if (method === 'GET' && path.match(/\/bcp\/patients\/[^/]+\/profile/)) return 'PATIENT_VIEWED';
     if (method === 'GET' && path.match(/\/bcp\/documents\/[^/]+\/download/)) return 'PDF_VIEWED';
+    if (method === 'POST' && path.includes('/bcp/patients/register-temp')) return 'TEMP_PATIENT_CREATED';
+    if (method === 'PATCH' && path.match(/\/bcp\/patients\/[^/]+\/demographics/)) return 'TEMP_PATIENT_UPDATED';
+    if (method === 'POST' && path.match(/\/bcp\/patients\/[^/]+\/notes/)) return 'BCP_NOTE_CREATED';
     return null;
   }
 

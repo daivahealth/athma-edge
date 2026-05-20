@@ -15,15 +15,21 @@ export class ClinicalProfileService {
       throw new NotFoundException(`Patient with MRN ${mrn} not found`);
     }
 
-    const clinicalProfile = await this.prisma.bcpPatientClinicalProfile.findFirst({
-      where: { mrn, tenantId },
-      orderBy: { lastSyncedAt: 'desc' },
-    });
+    const isTempPatient = patient.sourceSystem === 'BCP_LOCAL';
 
-    const documents = await this.prisma.bcpPatientPdfDocument.findMany({
-      where: { mrn, tenantId, isActive: true },
-      orderBy: { documentDatetime: 'desc' },
-    });
+    const clinicalProfile = isTempPatient
+      ? null
+      : await this.prisma.bcpPatientClinicalProfile.findFirst({
+          where: { mrn, tenantId },
+          orderBy: { lastSyncedAt: 'desc' },
+        });
+
+    const documents = isTempPatient
+      ? []
+      : await this.prisma.bcpPatientPdfDocument.findMany({
+          where: { mrn, tenantId, isActive: true },
+          orderBy: { documentDatetime: 'desc' },
+        });
 
     return {
       patient: {
@@ -42,6 +48,7 @@ export class ClinicalProfileService {
         admissionDatetime: patient.admissionDatetime,
         isMlc: patient.isMlc,
         lastSyncedAt: patient.lastSyncedAt,
+        sourceSystem: patient.sourceSystem,
       },
       clinicalProfile: clinicalProfile
         ? {

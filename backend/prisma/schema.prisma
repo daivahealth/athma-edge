@@ -55,8 +55,26 @@ enum EventType {
   PATIENT_VIEWED
   PDF_VIEWED
   LOGOUT
+  BCP_NOTE_CREATED
+  TEMP_PATIENT_CREATED
+  TEMP_PATIENT_UPDATED
 
   @@map("event_type_enum")
+}
+
+enum BcpNoteType {
+  ORDER
+  MEDICATION
+  INVESTIGATION
+  PROGRESS
+  ASSESSMENT
+  NURSING
+  HANDOVER
+  INCIDENT
+  COMMUNICATION
+  OTHER
+
+  @@map("bcp_note_type_enum")
 }
 
 // ─── bcp_active_patient ──────────────────────────────────────────────────────
@@ -260,4 +278,25 @@ model BcpUserRole {
 
   @@unique([tenantId, userId, roleId], name: "uq_user_role_tenant_user_role")
   @@map("bcp_user_role")
+}
+
+// ─── bcp_clinical_note ───────────────────────────────────────────────────────
+
+model BcpClinicalNote {
+  id             BigInt      @id @default(autoincrement())
+  tenantId       String      @map("tenant_id") @db.VarChar(100)
+  mrn            String      @db.VarChar(50)
+  encounterId    String?     @map("encounter_id") @db.VarChar(100)
+  visitNumber    String?     @map("visit_number") @db.VarChar(50)
+  noteType       BcpNoteType @map("note_type")
+  content        String      @db.Text
+  authorUsername String      @map("author_username") @db.VarChar(100)
+  authorFullName String?     @map("author_full_name") @db.VarChar(255)
+  authorRole     String      @map("author_role") @db.VarChar(50)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([tenantId, mrn], name: "idx_clinical_note_tenant_mrn")
+  @@index([tenantId, mrn, noteType], name: "idx_clinical_note_tenant_mrn_type")
+  @@index([createdAt], name: "idx_clinical_note_created_at")
+  @@map("bcp_clinical_note")
 }

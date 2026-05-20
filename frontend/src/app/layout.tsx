@@ -3,7 +3,11 @@ import { Inter } from 'next/font/google';
 import { QueryProvider } from '@/providers/query-provider';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: 'Athma Edge — BCP Console',
@@ -12,8 +16,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={inter.variable}>
+      <body className="font-sans">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, UserPlus } from 'lucide-react';
 import { usePatientSearch } from '@/modules/patients/hooks';
 import type { PatientSearchParams } from '@/modules/patients/types';
-import { CARE_SETTINGS, CARE_SETTING_LABELS } from '@/lib/utils/constants';
+import { CARE_SETTINGS, CARE_SETTING_LABELS, BCP_LOCAL_SOURCE } from '@/lib/utils/constants';
+import { RegisterTempPatientDialog } from '@/components/patients/register-temp-patient-dialog';
 import { formatDateTime, syncAgeColor, timeAgo } from '@/lib/utils/formatters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ export default function PatientSearchPage() {
     limit: 10,
   });
 
+  const [registerOpen, setRegisterOpen] = useState(false);
   const { data, isLoading, isFetching } = usePatientSearch(params);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -37,13 +39,13 @@ export default function PatientSearchPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Patient Search</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Patient Search</h1>
 
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSearch} className="flex flex-wrap items-end gap-4">
             <div className="flex-1 min-w-[200px]">
-              <label className="mb-1 block text-sm font-medium">Search</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Search</label>
               <Input
                 placeholder="MRN, UHID, name, or mobile..."
                 value={params.q || ''}
@@ -51,7 +53,7 @@ export default function PatientSearchPage() {
               />
             </div>
             <div className="w-48">
-              <label className="mb-1 block text-sm font-medium">Care Setting</label>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Care Setting</label>
               <Select
                 value={params.careSetting || 'ALL'}
                 onValueChange={(v) => setParams((p) => ({ ...p, careSetting: v === 'ALL' ? '' : v }))}
@@ -73,6 +75,10 @@ export default function PatientSearchPage() {
               <Search className="mr-2 h-4 w-4" />
               Search
             </Button>
+            <Button type="button" variant="outline" onClick={() => setRegisterOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Patient
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -80,52 +86,65 @@ export default function PatientSearchPage() {
       {data && (
         <Card>
           <CardHeader className="flex-row items-center justify-between pb-4">
-            <CardTitle className="text-lg">
-              Results ({data.meta.total} patient{data.meta.total !== 1 ? 's' : ''})
+            <CardTitle className="text-base font-semibold">
+              {data.meta.total} patient{data.meta.total !== 1 ? 's' : ''} found
             </CardTitle>
           </CardHeader>
           <CardContent>
             {data.data.length === 0 ? (
-              <p className="py-8 text-center text-muted-foreground">No patients found.</p>
+              <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+                <p className="text-lg font-medium">No patients found</p>
+                <p className="text-sm">Can&apos;t find the patient? Register a walk-in for BCP.</p>
+                <Button variant="outline" size="sm" onClick={() => setRegisterOpen(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" /> Add Patient
+                </Button>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="pb-3 pr-4 font-medium">MRN</th>
-                      <th className="pb-3 pr-4 font-medium">Patient Name</th>
-                      <th className="pb-3 pr-4 font-medium">Care Setting</th>
-                      <th className="pb-3 pr-4 font-medium">Ward / Bed</th>
-                      <th className="pb-3 pr-4 font-medium">Consultant</th>
-                      <th className="pb-3 pr-4 font-medium">Status</th>
-                      <th className="pb-3 font-medium">Synced</th>
+                    <tr className="border-b bg-muted/30 text-left">
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">MRN</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Patient Name</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Age / Gender</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Care Setting</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ward / Bed</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Consultant</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Synced</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y">
                     {data.data.map((patient) => (
-                      <tr key={patient.id} className="border-b last:border-0 hover:bg-muted/50">
-                        <td className="py-3 pr-4">
+                      <tr key={patient.id} className="transition-colors hover:bg-muted/40">
+                        <td className="px-4 py-3">
                           <Link href={`/patients/${patient.mrn}`} className="font-medium text-primary hover:underline">
                             {patient.mrn}
                           </Link>
+                          {(patient as any).sourceSystem === BCP_LOCAL_SOURCE && (
+                            <Badge variant="warning" className="ml-2 text-[10px]">TEMP</Badge>
+                          )}
                         </td>
-                        <td className="py-3 pr-4">{patient.patientName}</td>
-                        <td className="py-3 pr-4">
+                        <td className="px-4 py-3 font-medium">{patient.patientName}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {[patient.age, patient.gender].filter(Boolean).join(' / ') || '—'}
+                        </td>
+                        <td className="px-4 py-3">
                           <Badge variant="secondary">
                             {CARE_SETTING_LABELS[patient.careSetting as keyof typeof CARE_SETTING_LABELS] || patient.careSetting}
                           </Badge>
                         </td>
-                        <td className="py-3 pr-4">
+                        <td className="px-4 py-3 text-muted-foreground">
                           {patient.wardName || '—'}
                           {patient.bedNumber ? ` / ${patient.bedNumber}` : ''}
                         </td>
-                        <td className="py-3 pr-4">{patient.consultantName || '—'}</td>
-                        <td className="py-3 pr-4">
+                        <td className="px-4 py-3 text-muted-foreground">{patient.consultantName || '—'}</td>
+                        <td className="px-4 py-3">
                           <Badge variant={patient.isActive ? 'success' : 'outline'}>
                             {patient.isActive ? 'Active' : 'Inactive'}
                           </Badge>
                         </td>
-                        <td className={`py-3 text-xs ${syncAgeColor(patient.lastSyncedAt)}`}>
+                        <td className={`px-4 py-3 text-xs ${syncAgeColor(patient.lastSyncedAt)}`}>
                           {timeAgo(patient.lastSyncedAt)}
                         </td>
                       </tr>
@@ -157,6 +176,8 @@ export default function PatientSearchPage() {
       {isLoading && (
         <p className="text-center text-muted-foreground">Loading patients...</p>
       )}
+
+      <RegisterTempPatientDialog open={registerOpen} onOpenChange={setRegisterOpen} />
     </div>
   );
 }
