@@ -15,15 +15,17 @@ This file is intentionally policy-heavy. It defines how agents should work, whic
 Athma Edge is a **Phase-1 Hospital BCP (Business Continuity Plan) Edge Application**. It provides local clinical continuity when the main cloud HIS/EMR is unreachable.
 
 **It IS:**
-- A local read-only cache of active patient data, lean clinical profiles, and PDF documents
+- A local cache of active patient data, lean clinical profiles, and PDF documents synced from the cloud HIS
+- A BCP clinical documentation tool — append-only clinical notes (orders, medications, assessments, handover, etc.) recorded as free text
+- A temporary patient registration system — walk-in patients during outage get a BCP-prefixed MRN
 - Synced from the cloud HIS via n8n workflows that upsert directly into PostgreSQL
 - Deployed on a hospital edge box via Docker Compose
 
 **It is NOT:**
 - A disaster recovery (DR) system
 - A full EMR/HIS replacement
-- A system with local order entry, medication entry, or billing
-- A reconciliation engine
+- A system with structured order entry, medication prescribing, or billing — clinical notes are free-text documentation, not structured orders
+- A reconciliation engine — local notes and temp patients require manual reconciliation when the HIS recovers
 
 ## Purpose
 
@@ -99,12 +101,12 @@ athma-edge/
 │   └── src/                # NestJS single-service application
 │       ├── common/         # Guards, decorators, filters, interceptors, middleware
 │       ├── database/       # PrismaService and PrismaModule
-│       └── modules/        # Feature modules (auth, user, patient, clinical-profile, document, sync-status, audit, health)
+│       └── modules/        # Feature modules (auth, user, patient, clinical-profile, clinical-note, document, sync-status, audit, health)
 ├── frontend/               # Next.js 14 App Router application
 │   └── src/
 │       ├── app/            # Route pages and layouts
 │       ├── components/     # UI primitives, layout, feature components
-│       ├── modules/        # Domain modules (auth, patients, sync, admin)
+│       ├── modules/        # Domain modules (auth, patients, clinical-notes, sync, admin)
 │       ├── lib/            # API client, stores, utilities
 │       ├── hooks/          # Shared React hooks
 │       └── providers/      # React context providers
@@ -135,8 +137,9 @@ Key code locations:
 
 These rules are unique to the BCP edge application and must not be violated.
 
-- **Phase-1 is read-only for clinical data.** No local order entry, medication entry, or billing. Do not add write endpoints or UI forms for clinical data.
-- **All clinical data comes from n8n sync.** The NestJS API reads from PostgreSQL; n8n writes to PostgreSQL. Do not add write paths for clinical tables in the API.
+- **Synced clinical data is read-only.** Do not add write endpoints or UI forms that modify synced clinical tables (vitals, medications, investigations, documents). These come from n8n sync only.
+- **Two local-write exceptions exist:** BCP Clinical Notes (append-only, free-text) and BCP Temporary Patient Registration (walk-in patients with `BCP-` prefixed MRNs). Both are append-only — notes cannot be edited or deleted; temp patient demographics can be updated but not deleted.
+- **No structured order entry, medication prescribing, or billing.** Clinical notes are free-text documentation for manual reconciliation, not executable orders.
 - **Always show sync freshness.** Every patient-facing view must display `last_synced_at`. If stale (>5 minutes), show a warning banner.
 - **Always show BCP LOCAL MODE.** The UI must permanently display a non-dismissible banner indicating this is the BCP local system, not the primary HIS.
 - **External IDs are VARCHAR, not UUID.** All IDs from the source HIS (patient_id, mrn, uhid, encounter_id, visit_number, consultant_id, tenant_id, source_system) must be VARCHAR. Do not generate UUIDs for these.
@@ -173,7 +176,7 @@ These rules are unique to the BCP edge application and must not be violated.
   - affected modules
   - seed or migration implications
   - documentation updates in the correct doc family
-- All user actions must be audit-logged (login, search, view, download, logout).
+- All user actions must be audit-logged (login, search, view, download, note creation, temp patient registration, logout).
 - JWT auth is stateless. No token blacklist in Phase-1.
 - bcrypt for password hashing (not argon2).
 
@@ -240,7 +243,7 @@ docker compose logs -f bcp-api
 
 - Don't duplicate architecture or feature detail already covered in `docs/`.
 - Don't create summary/status/completion markdown files by default.
-- Don't add write endpoints for clinical data (Phase-1 is read-only).
+- Don't add write endpoints for synced clinical data (vitals, medications, investigations, documents). Only BCP Clinical Notes and Temp Patient Registration are writable.
 - Don't bypass the audit interceptor for user-facing actions.
 - Don't introduce Kafka, Redis, Elasticsearch, or Kubernetes.
 - Don't use UUID for external IDs; use VARCHAR.

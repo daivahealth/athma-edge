@@ -7,11 +7,11 @@ Documentation entrypoint for the Athma Edge BCP (Business Continuity Plan) appli
 ### Architecture & Design
 - [Architecture Overview](architecture/README.md)
 - [Technical Architecture](architecture/TECHNICAL-ARCHITECTURE.md) — system design, components, data flow
-- [Data Model](architecture/DATA-MODEL.md) — complete database schema reference (8 tables)
+- [Data Model](architecture/DATA-MODEL.md) — complete database schema reference (9 tables)
 
 ### Architecture Decision Records
 - [ADR-0001: Technology Stack](ADR/ADR-0001-technology-stack.md)
-- [ADR-0002: Read-Only Phase-1](ADR/ADR-0002-read-only-phase1.md)
+- [ADR-0002: Read-Only Phase-1 (with BCP Write Exceptions)](ADR/ADR-0002-read-only-phase1.md)
 - [ADR-0003: n8n Sync Strategy](ADR/ADR-0003-n8n-sync-strategy.md)
 - [ADR-0004: External ID Strategy](ADR/ADR-0004-external-id-strategy.md)
 - [ADR-0005: Soft Delete & Daily Rollover](ADR/ADR-0005-soft-delete-daily-rollover.md)
@@ -19,7 +19,8 @@ Documentation entrypoint for the Athma Edge BCP (Business Continuity Plan) appli
 ### API Contracts
 - [API Overview](api/README.md) — auth patterns, base URL, role matrix
 - [Auth API](api/AUTH-API.md) — login, me, logout
-- [Patient API](api/PATIENT-API.md) — search, clinical profile
+- [Patient API](api/PATIENT-API.md) — search, clinical profile, temp patient registration
+- [Clinical Notes API](api/CLINICAL-NOTES-API.md) — create and list BCP clinical notes
 - [Document API](api/DOCUMENT-API.md) — PDF list, download
 - [Admin API](api/ADMIN-API.md) — users, sync status, audit
 - [Response Formats](api/API-RESPONSE-FORMATS.md) — standard envelopes and errors
@@ -28,6 +29,8 @@ Documentation entrypoint for the Athma Edge BCP (Business Continuity Plan) appli
 - [Features Overview](features/README.md)
 - [Patient Search](features/PATIENT-SEARCH.md) — search behavior, filters, OP sync rules
 - [Clinical Profile](features/CLINICAL-PROFILE.md) — profile sections, data mapping
+- [BCP Clinical Notes](features/BCP-CLINICAL-NOTES.md) — free-text clinical documentation during outages
+- [BCP Temporary Patients](features/BCP-TEMPORARY-PATIENTS.md) — walk-in patient registration during outages
 - [PDF Documents](features/PDF-DOCUMENTS.md) — document types, storage, download
 - [Sync Status](features/SYNC-STATUS.md) — sync health dashboard
 - [Daily Rollover](features/DAILY-ROLLOVER.md) — business date logic, soft status rules

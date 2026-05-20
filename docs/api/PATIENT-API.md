@@ -1,6 +1,6 @@
 # Patient API
 
-Patient search and clinical profile endpoints.
+Patient search, clinical profile, and temporary patient registration endpoints.
 
 ## GET /api/bcp/patients/search
 
@@ -36,7 +36,8 @@ Patient search and clinical profile endpoints.
       "wardName": "Ward A",
       "bedNumber": "A-101",
       "consultantName": "Dr. Smith",
-      "lastSyncedAt": "2026-05-16T08:30:00Z"
+      "lastSyncedAt": "2026-05-16T08:30:00Z",
+      "sourceSystem": "HIS"
     }
   ],
   "meta": {
@@ -52,6 +53,7 @@ Patient search and clinical profile endpoints.
 - Text search (`q`) uses case-insensitive contains matching
 - Audit event `PATIENT_SEARCHED` is logged with the search query
 - Results sorted by patient_name ascending by default
+- `sourceSystem` field distinguishes synced patients (e.g., `"HIS"`) from locally registered temp patients (`"BCP_LOCAL"`)
 
 ---
 
@@ -135,3 +137,105 @@ Patient search and clinical profile endpoints.
 - Audit event `PATIENT_VIEWED` is logged with the MRN
 - If `clinicalProfile` is null, the profile has not been synced yet
 - `documents` array may be empty if no PDFs have been synced
+- For temp patients (`sourceSystem: 'BCP_LOCAL'`), `clinicalProfile` is null and `documents` is empty
+
+---
+
+## POST /api/bcp/patients/register-temp
+
+Register a new temporary (walk-in) patient during BCP.
+
+**Auth:** Required
+**Roles:** DOCTOR, NURSE, ADMIN
+
+### Request Body
+
+```json
+{
+  "patientName": "Jane Doe",
+  "gender": "Female",
+  "age": "32Y",
+  "careSetting": "EMERGENCY",
+  "wardName": "Ground Floor",
+  "bedNumber": "101"
+}
+```
+
+| Field | Type | Required | Constraints |
+|-------|------|----------|-------------|
+| patientName | string | Yes | Max 255 characters |
+| gender | string | No | Male, Female, Other |
+| dateOfBirth | string | No | ISO date (YYYY-MM-DD) |
+| age | string | No | Max 20 characters (e.g., "34Y", "6M") |
+| mobileNumber | string | No | Max 30 characters |
+| careSetting | enum | Yes | INPATIENT, OUTPATIENT, DAYCARE, EMERGENCY |
+| wardName | string | No | |
+| bedNumber | string | No | |
+| consultantName | string | No | |
+
+### Response (201 Created)
+
+```json
+{
+  "data": {
+    "id": 11,
+    "mrn": "BCP-20260520-001",
+    "patientName": "Jane Doe",
+    "gender": "Female",
+    "age": "32Y",
+    "careSetting": "EMERGENCY",
+    "sourceSystem": "BCP_LOCAL",
+    "isActive": true
+  }
+}
+```
+
+### Notes
+
+- MRN is auto-generated in format `BCP-YYYYMMDD-NNN`
+- `sourceSystem` is set to `BCP_LOCAL`
+- Audit event `TEMP_PATIENT_CREATED` is logged
+- Retries up to 3 times on MRN collision
+
+---
+
+## PATCH /api/bcp/patients/:mrn/demographics
+
+Update demographics for a BCP temporary patient.
+
+**Auth:** Required
+**Roles:** DOCTOR, NURSE, ADMIN
+
+### Path Parameters
+
+| Param | Type | Description |
+|-------|------|-------------|
+| mrn | string | The BCP-prefixed MRN of the temp patient |
+
+### Request Body
+
+All fields are optional. Only provided fields are updated.
+
+```json
+{
+  "patientName": "Jane M. Doe",
+  "wardName": "ICU",
+  "bedNumber": "ICU-03"
+}
+```
+
+### Response (200 OK)
+
+Returns the updated patient record.
+
+### Errors
+
+| Status | Condition |
+|--------|-----------|
+| 404 | No BCP_LOCAL patient found with this MRN |
+
+### Notes
+
+- Only works for patients with `sourceSystem = 'BCP_LOCAL'`
+- Synced patient demographics cannot be edited via this endpoint
+- Audit event `TEMP_PATIENT_UPDATED` is logged

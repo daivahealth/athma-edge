@@ -28,6 +28,8 @@ Obtain a token via `POST /api/auth/login`.
 | Patient Search | Yes | Yes | Yes |
 | Clinical Profile | Yes | Yes | Yes |
 | PDF View/Download | Yes | Yes | Yes |
+| BCP Clinical Notes | Yes | Yes | Yes |
+| Temp Patient Registration | Yes | Yes | Yes |
 | User Management | No | No | Yes |
 | Sync Status | No | No | Yes |
 | Audit Logs | No | No | Yes |
@@ -35,7 +37,8 @@ Obtain a token via `POST /api/auth/login`.
 ## Endpoint Index
 
 - [Auth API](AUTH-API.md) — login, current user, logout
-- [Patient API](PATIENT-API.md) — search, clinical profile
+- [Patient API](PATIENT-API.md) — search, clinical profile, temp patient registration
+- [Clinical Notes API](CLINICAL-NOTES-API.md) — create and list BCP clinical notes
 - [Document API](DOCUMENT-API.md) — PDF list, download
 - [Admin API](ADMIN-API.md) — users, sync status, audit
 - [Response Formats](API-RESPONSE-FORMATS.md) — standard envelopes and errors

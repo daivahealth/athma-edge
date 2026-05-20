@@ -4,7 +4,7 @@ System design for the Athma Edge BCP application.
 
 ## Overview
 
-Athma Edge is a local clinical continuity application deployed on a hospital edge server. It provides read-only access to active patient data, lean clinical profiles, and PDF documents when the main cloud HIS/EMR is unreachable.
+Athma Edge is a local clinical continuity application deployed on a hospital edge server. It provides access to active patient data, lean clinical profiles, and PDF documents when the main cloud HIS/EMR is unreachable. Staff can also create clinical notes and register walk-in patients locally during the outage.
 
 ## System Components
 
@@ -52,7 +52,7 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 - Zustand for auth state, React Query for server state
 - Displays persistent BCP LOCAL MODE banner
 - Shows sync freshness on all patient views
-- Read-only: no clinical data editing in Phase-1
+- Synced clinical data is read-only; BCP Clinical Notes and Temp Patient Registration are local-write exceptions
 
 ### BCP API (NestJS)
 - Single NestJS service (not a monorepo)
@@ -61,11 +61,11 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 - Prisma ORM for PostgreSQL access
 - Automatic audit logging via interceptor
 - Serves PDF files from local storage
-- Does NOT write clinical data (n8n handles sync)
+- Does NOT write synced clinical data (n8n handles sync); writes BCP Clinical Notes and Temp Patient records locally
 
 ### PostgreSQL 16
 - Single database: `bcp_db`
-- 8 tables (see [Data Model](DATA-MODEL.md))
+- 9 tables (see [Data Model](DATA-MODEL.md))
 - n8n writes (upserts from source HIS)
 - BCP API reads (serves to frontend)
 - Separate `n8n_db` for n8n internal state
@@ -99,6 +99,12 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 4. User downloads PDF → API streams file from local storage
 5. All actions audit-logged to `bcp_audit_log`
 
+### Local Write Flow (BCP Clinical Notes + Temp Patients)
+1. User creates a clinical note → API inserts into `bcp_clinical_note` (append-only, no edits/deletes)
+2. User registers a walk-in patient → API inserts into `bcp_active_patient` with `source_system = 'BCP_LOCAL'` and auto-generated `BCP-YYYYMMDD-NNN` MRN
+3. User edits temp patient demographics → API updates the `bcp_active_patient` record (only for `BCP_LOCAL` patients)
+4. All local-write actions are audit-logged (`BCP_NOTE_CREATED`, `TEMP_PATIENT_CREATED`, `TEMP_PATIENT_UPDATED`)
+
 ## Care Settings
 
 | Setting | Sync Behavior | Rollover |
@@ -119,7 +125,8 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 ## Constraints
 
 - No Kafka, Kubernetes, Elasticsearch, or Redis
-- No local clinical data entry (Phase-1)
-- No billing, no reconciliation
+- Synced clinical data is read-only; local writes limited to BCP Clinical Notes (append-only) and Temp Patient Registration
+- No structured order entry, medication prescribing, or billing
+- No automated reconciliation — local data requires manual reconciliation when HIS recovers
 - All external IDs are VARCHAR (not UUID)
 - Soft delete only (no hard deletes for patient/clinical records)

@@ -11,6 +11,9 @@ All user activity in the BCP application is logged to the `bcp_audit_log` table.
 | PATIENT_SEARCHED | Patient search executed | username, search query (in additional_data) |
 | PATIENT_VIEWED | Clinical profile viewed | username, mrn, encounter_id |
 | PDF_VIEWED | PDF document downloaded | username, mrn, document_id |
+| BCP_NOTE_CREATED | Clinical note created | username, mrn, noteType (in additional_data) |
+| TEMP_PATIENT_CREATED | Temp patient registered | username, mrn |
+| TEMP_PATIENT_UPDATED | Temp patient demographics edited | username, mrn |
 | LOGOUT | User logout | username |
 
 ## Automatic Logging
@@ -23,6 +26,9 @@ The `AuditInterceptor` (NestJS global interceptor) automatically logs events bas
 | GET /api/bcp/patients/search | PATIENT_SEARCHED | — |
 | GET /api/bcp/patients/:mrn/profile | PATIENT_VIEWED | — |
 | GET /api/bcp/documents/:id/download | PDF_VIEWED | — |
+| POST /api/bcp/patients/:mrn/notes | BCP_NOTE_CREATED | — |
+| POST /api/bcp/patients/register-temp | TEMP_PATIENT_CREATED | — |
+| PATCH /api/bcp/patients/:mrn/demographics | TEMP_PATIENT_UPDATED | — |
 | POST /api/auth/logout | LOGOUT | — |
 
 The interceptor uses RxJS `tap()` for success logging and `catchError()` for failure logging (login failures).

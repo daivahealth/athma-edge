@@ -60,9 +60,21 @@ Lean clinical continuity profile displayed per patient. This is NOT a full EMR c
 
 List of available PDF documents at the bottom of the profile page with download buttons. See [PDF Documents](PDF-DOCUMENTS.md).
 
-## Phase-1 Constraints
+## BCP Temporary Patients
 
-- All sections are **read-only** — no edit buttons
-- Data comes from n8n sync, not from user input
+Temporary patients (registered locally during BCP, `sourceSystem: 'BCP_LOCAL'`) have a reduced profile:
+
+- **Demographics card** with an **Edit** button (only for temp patients)
+- **Only Clinical Notes tab** visible — Vitals, Medications, Investigations, and Documents tabs are hidden
+- **"BCP Temporary" badge** displayed next to patient name
+- **No stale data warning** or sync timestamps (data is local, not synced)
+
+See [BCP Temporary Patients](BCP-TEMPORARY-PATIENTS.md) for full details.
+
+## Constraints
+
+- Synced clinical sections (vitals, medications, investigations, documents) are **read-only** — no edit buttons
+- Synced data comes from n8n sync, not from user input
+- BCP Clinical Notes tab is available on all patients (synced and temporary) and is a local-write feature
 - If clinical profile has not been synced yet, show "Clinical profile not yet synced" placeholder
 - Null/empty fields should show "Not available" rather than blank space

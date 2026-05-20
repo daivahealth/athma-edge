@@ -62,6 +62,11 @@ A user can have multiple roles (many-to-many via `bcp_user_role`).
 | GET /api/bcp/patients/:mrn/profile | Yes | Yes | Yes |
 | GET /api/bcp/patients/:mrn/documents | Yes | Yes | Yes |
 | GET /api/bcp/documents/:id/download | Yes | Yes | Yes |
+| POST /api/bcp/patients/:mrn/notes | Yes | Yes | Yes |
+| GET /api/bcp/patients/:mrn/notes | Yes | Yes | Yes |
+| GET /api/bcp/clinical-notes | Yes | Yes | Yes |
+| POST /api/bcp/patients/register-temp | Yes | Yes | Yes |
+| PATCH /api/bcp/patients/:mrn/demographics | Yes | Yes | Yes |
 | POST /api/users | No | No | Yes |
 | GET /api/users | No | No | Yes |
 | PATCH /api/users/:id | No | No | Yes |

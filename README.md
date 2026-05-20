@@ -1,10 +1,12 @@
 # Athma Edge — Hospital BCP Application
 
-Local clinical continuity layer for hospitals. When the main cloud HIS/EMR becomes unreachable, clinical staff use Athma Edge for read-only access to active patient data, lean clinical profiles, and PDF documents.
+Local clinical continuity layer for hospitals. When the main cloud HIS/EMR becomes unreachable, clinical staff use Athma Edge to access active patient data, record clinical notes, and register walk-in patients.
 
 ## What This IS
 
-- Read-only local cache of active patient data
+- Local cache of active patient data synced from the source HIS
+- BCP Clinical Notes — append-only clinical documentation during outages (orders, medications, assessments, handover notes, etc.)
+- BCP Temporary Patient Registration — walk-in patients who don't exist in the synced data
 - Business Continuity Plan (BCP) tool for network outages
 - Synced from source HIS via n8n workflows
 - Deployed on a hospital edge box via Docker Compose
@@ -13,7 +15,8 @@ Local clinical continuity layer for hospitals. When the main cloud HIS/EMR becom
 
 - Not a Disaster Recovery system
 - Not a full EMR/HIS replacement
-- No local order entry, medication prescribing, or billing
+- No structured order entry, medication prescribing, or billing — clinical notes are free-text documentation only
+- Not a reconciliation engine — local notes and temp patients are for manual reconciliation when the HIS recovers
 - Not designed for internet-facing deployment
 
 ## Architecture
@@ -82,8 +85,8 @@ docker compose exec bcp-api npx prisma db seed
 
 | Role | Access |
 |------|--------|
-| DOCTOR | Patient search, clinical profiles, PDF documents |
-| NURSE | Patient search, clinical profiles, PDF documents |
+| DOCTOR | Patient search, clinical profiles, PDF documents, clinical notes, temp patient registration |
+| NURSE | Patient search, clinical profiles, PDF documents, clinical notes, temp patient registration |
 | ADMIN | All of above + user management, sync status, audit log |
 
 ## Care Settings
