@@ -43,6 +43,7 @@ Documentation entrypoint for the Athma Edge BCP (Business Continuity Plan) appli
 
 ### Deployment
 - [Deployment Overview](deployment/README.md)
+- [Deployment Guide (Windows & Linux)](deployment/DEPLOYMENT-GUIDE.md) — step-by-step installation and setup
 - [Docker Compose](deployment/DOCKER-COMPOSE.md) — service topology, volumes
 - [Nginx Config](deployment/NGINX-CONFIG.md) — reverse proxy routing
 - [n8n Workflows](deployment/N8N-WORKFLOWS.md) — sync workflow design
