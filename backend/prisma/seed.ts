@@ -264,11 +264,16 @@ async function main() {
       primaryDiagnosis: 'Acute Myocardial Infarction (STEMI)',
       allergies: 'Penicillin, Sulfonamides',
       highRiskFlags: 'Fall Risk, DVT Risk',
-      latestVitals: {
-        temperature: '98.6°F', pulse: '88 bpm', bp: '140/90 mmHg',
-        spo2: '96%', rr: '18/min', gcs: '15/15',
-        recordedAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
-      },
+      latestVitals: [
+        {
+          recordedAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
+          temperature: '98.6°F', pulse: '88 bpm', bp: '140/90 mmHg', spo2: '96%', rr: '18/min', gcs: '15/15',
+        },
+        {
+          recordedAt: new Date(now.getTime() - 90 * 60 * 1000).toISOString(),
+          temperature: '99.1°F', pulse: '94 bpm', bp: '138/88 mmHg', spo2: '95%', rr: '19/min', gcs: '15/15',
+        },
+      ],
       activeMedications: [
         { name: 'Aspirin', dose: '325mg', route: 'Oral', frequency: 'OD' },
         { name: 'Clopidogrel', dose: '75mg', route: 'Oral', frequency: 'OD' },
@@ -282,6 +287,32 @@ async function main() {
       ],
       criticalResults: 'Troponin I: 12.5 ng/mL (Critical High)',
       handoverNotes: 'Post-PCI Day 1. Stent to LAD. Monitor for chest pain recurrence. Next troponin at 6h.',
+      intakeOutputChart: {
+        output: {
+          Urine: {
+            data: { total: { value: 110.0 }, '2026-10-12T15:00': { value: 110.0 } },
+            record: { Urine: { '2026-10-12T15:00': { latestId: 4490787, value: 110.0 }, total: { value: 110.0 } } },
+            'Total Output': { data: { total: { value: 110.0 }, '2026-10-12T15:00': { value: 110.0 } } },
+          },
+          'Total Output': { data: { '2026-10-12T15:00': { value: 110.0 }, total: { value: 110.0 } } },
+        },
+        intake: {
+          colloidIntakeTotal: 0.0,
+          'NG/OG': {
+            data: { total: { value: 150.0 }, '2026-10-12T10:00': { value: 100.0 }, '2026-10-12T13:00': { value: 50.0 } },
+            record: {
+              Water: {
+                total: { value: 150.0 },
+                '2026-10-12T13:00': { latestId: 4490786, value: 50.0 },
+                '2026-10-12T10:00': { latestId: 4490784, value: 100.0 },
+              },
+            },
+          },
+          enteralFeedIntakeTotal: 150.0,
+          crystalloidIntakeTotal: 0.0,
+          'Total Intake': { data: { total: { value: 150.0 }, '2026-10-12T13:00': { value: 50.0 }, '2026-10-12T10:00': { value: 100.0 } } },
+        },
+      },
     },
     {
       mrn: 'MRN-10002', encounterId: 'ENC-30002', visitNumber: 'V-40002',
@@ -289,11 +320,16 @@ async function main() {
       primaryDiagnosis: 'Community Acquired Pneumonia',
       allergies: 'None known',
       highRiskFlags: null,
-      latestVitals: {
-        temperature: '101.2°F', pulse: '102 bpm', bp: '110/70 mmHg',
-        spo2: '93%', rr: '24/min',
-        recordedAt: new Date(now.getTime() - 45 * 60 * 1000).toISOString(),
-      },
+      latestVitals: [
+        {
+          recordedAt: new Date(now.getTime() - 45 * 60 * 1000).toISOString(),
+          temperature: '101.2°F', pulse: '102 bpm', bp: '110/70 mmHg', spo2: '93%', rr: '24/min',
+        },
+        {
+          recordedAt: new Date(now.getTime() - 105 * 60 * 1000).toISOString(),
+          temperature: '101.8°F', pulse: '108 bpm', bp: '108/68 mmHg', spo2: '92%', rr: '25/min',
+        },
+      ],
       activeMedications: [
         { name: 'Piperacillin-Tazobactam', dose: '4.5g', route: 'IV', frequency: 'Q8H' },
         { name: 'Azithromycin', dose: '500mg', route: 'IV', frequency: 'OD' },
@@ -314,11 +350,16 @@ async function main() {
       primaryDiagnosis: 'Fracture Neck of Femur — Right (Post-op Day 2, Hemiarthroplasty)',
       allergies: 'Ibuprofen (GI upset)',
       highRiskFlags: 'Fall Risk, VTE Risk',
-      latestVitals: {
-        temperature: '99.0°F', pulse: '78 bpm', bp: '130/82 mmHg',
-        spo2: '98%', rr: '16/min', painScore: '4/10',
-        recordedAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
-      },
+      latestVitals: [
+        {
+          recordedAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
+          temperature: '99.0°F', pulse: '78 bpm', bp: '130/82 mmHg', spo2: '98%', rr: '16/min', painScore: '4/10',
+        },
+        {
+          recordedAt: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
+          temperature: '99.4°F', pulse: '82 bpm', bp: '128/80 mmHg', spo2: '97%', rr: '17/min', painScore: '5/10',
+        },
+      ],
       activeMedications: [
         { name: 'Tramadol', dose: '50mg', route: 'Oral', frequency: 'TDS' },
         { name: 'Paracetamol', dose: '1g', route: 'Oral', frequency: 'QDS' },
@@ -338,11 +379,16 @@ async function main() {
       primaryDiagnosis: 'Congestive Heart Failure (NYHA Class III)',
       allergies: 'ACE Inhibitors (Angioedema)',
       highRiskFlags: 'Fall Risk',
-      latestVitals: {
-        temperature: '98.2°F', pulse: '92 bpm', bp: '100/60 mmHg',
-        spo2: '91%', rr: '22/min', weight: '78kg',
-        recordedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
-      },
+      latestVitals: [
+        {
+          recordedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+          temperature: '98.2°F', pulse: '92 bpm', bp: '100/60 mmHg', spo2: '91%', rr: '22/min', weight: '78kg',
+        },
+        {
+          recordedAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
+          temperature: '98.4°F', pulse: '96 bpm', bp: '98/58 mmHg', spo2: '90%', rr: '23/min', weight: '78.4kg',
+        },
+      ],
       activeMedications: [
         { name: 'Furosemide', dose: '40mg', route: 'IV', frequency: 'BD' },
         { name: 'Carvedilol', dose: '6.25mg', route: 'Oral', frequency: 'BD' },
@@ -362,11 +408,16 @@ async function main() {
       primaryDiagnosis: 'Acute Exacerbation of COPD',
       allergies: 'Aspirin',
       highRiskFlags: 'Fall Risk, Oxygen Dependent',
-      latestVitals: {
-        temperature: '99.8°F', pulse: '110 bpm', bp: '150/88 mmHg',
-        spo2: '88%', rr: '28/min',
-        recordedAt: new Date(now.getTime() - 15 * 60 * 1000).toISOString(),
-      },
+      latestVitals: [
+        {
+          recordedAt: new Date(now.getTime() - 15 * 60 * 1000).toISOString(),
+          temperature: '99.8°F', pulse: '110 bpm', bp: '150/88 mmHg', spo2: '88%', rr: '28/min',
+        },
+        {
+          recordedAt: new Date(now.getTime() - 75 * 60 * 1000).toISOString(),
+          temperature: '100.2°F', pulse: '115 bpm', bp: '152/90 mmHg', spo2: '86%', rr: '30/min',
+        },
+      ],
       activeMedications: [
         { name: 'Salbutamol Nebulisation', dose: '5mg', route: 'Neb', frequency: 'Q4H' },
         { name: 'Ipratropium', dose: '500mcg', route: 'Neb', frequency: 'Q6H' },
@@ -399,6 +450,7 @@ async function main() {
         pendingInvestigations: cp.pendingInvestigations,
         criticalResults: cp.criticalResults,
         handoverNotes: cp.handoverNotes,
+        intakeOutputChart: (cp as any).intakeOutputChart ?? undefined,
         lastClinicalUpdateAt: new Date(now.getTime() - 30 * 60 * 1000),
         lastSyncedAt: now,
       },

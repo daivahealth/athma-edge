@@ -135,6 +135,36 @@ Metadata for locally stored PDF documents. Binary content is on the filesystem, 
 
 ---
 
+### bcp_patient_investigation_result
+
+One row per `(tenant_id, mrn, category)`. The full investigation-result hierarchy (all dates, services, and results) is stored as a single JSONB blob — there is no per-date or per-service row.
+
+| Column | Type | Nullable | Default | Notes |
+|--------|------|----------|---------|-------|
+| id | BIGSERIAL | NO | auto | PK |
+| tenant_id | VARCHAR(100) | NO | | |
+| source_system | VARCHAR(100) | NO | | |
+| patient_id | VARCHAR(100) | YES | | |
+| mrn | VARCHAR(50) | NO | | |
+| uhid | VARCHAR(50) | YES | | |
+| encounter_id | VARCHAR(100) | YES | | |
+| visit_number | VARCHAR(50) | YES | | |
+| category | VARCHAR(100) | NO | | See enum below |
+| result_data | JSONB | NO | | `{ dates, services, data }` — verbatim sync payload |
+| last_synced_at | TIMESTAMP | NO | | |
+| created_at | TIMESTAMP | NO | now() | |
+| updated_at | TIMESTAMP | NO | now() | |
+
+**Investigation categories:** LAB, RAD, OTHER (Phase-1 only populates/serves LAB; RAD and OTHER are reserved for future sync workflows).
+
+**Constraints:**
+- UNIQUE: `(tenant_id, mrn, category)` — enforces exactly one record per MRN + category
+
+**Indexes:**
+- `bcp_patient_investigation_result(mrn)`
+
+---
+
 ### bcp_sync_status
 
 Tracks n8n sync health per component.
@@ -266,6 +296,7 @@ bcp_user ──1:N──▶ bcp_user_role ◀──N:1── bcp_role
 
 bcp_active_patient ──(mrn)──▶ bcp_patient_clinical_profile
 bcp_active_patient ──(mrn)──▶ bcp_patient_pdf_document
+bcp_active_patient ──(mrn)──▶ bcp_patient_investigation_result
 ```
 
 Clinical tables are joined by `mrn` (not FK) because they are independently synced by different n8n workflows.

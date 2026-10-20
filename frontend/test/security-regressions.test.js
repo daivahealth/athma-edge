@@ -22,3 +22,13 @@ test('auth store hydrates from /auth/me rather than decoding a browser token', (
   assert.doesNotMatch(source, /atob\(/);
   assert.doesNotMatch(source, /localStorage/);
 });
+
+test('investigation results module fetches via the shared api client and does not hardcode result data', () => {
+  const service = read('src/modules/investigation-results/services.ts');
+  assert.match(service, /apiClient\s*\.get<\{ data: InvestigationResult \| null \}>\(`\/bcp\/patients\/\$\{mrn\}\/investigation-results`/);
+  assert.doesNotMatch(service, /"CBC"|"LFT"|"Lipid Profile"/);
+
+  const merge = read('src/modules/investigation-results/merge.ts');
+  assert.doesNotMatch(merge, /"CBC"|"LFT"|"Lipid Profile"/);
+});
+

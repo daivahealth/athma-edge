@@ -37,6 +37,8 @@ export class ClinicalNoteService {
         authorUsername: user.username,
         authorFullName: bcpUser?.fullName || null,
         authorRole: user.roles[0] || 'UNKNOWN',
+        source: 'BCP',
+        recordedAt: new Date(),
       },
     });
 
@@ -51,6 +53,8 @@ export class ClinicalNoteService {
       authorUsername: note.authorUsername,
       authorFullName: note.authorFullName,
       authorRole: note.authorRole,
+      source: note.source,
+      recordedAt: note.recordedAt,
       createdAt: note.createdAt,
     };
   }
@@ -59,6 +63,8 @@ export class ClinicalNoteService {
     const noteTypeFilter = dto.noteType
       ? Prisma.sql`AND cn."note_type" = ${dto.noteType}::"bcp_note_type_enum"`
       : Prisma.empty;
+
+    const sourceFilter = dto.source ? Prisma.sql`AND cn."source" = ${dto.source}` : Prisma.empty;
 
     const searchTerm = dto.q?.trim();
     const searchFilter = searchTerm
@@ -76,7 +82,7 @@ export class ClinicalNoteService {
       SELECT DISTINCT ON (cn.mrn)
         cn.id, cn.tenant_id, cn.mrn, cn.encounter_id, cn.visit_number,
         cn.note_type, cn.content, cn.author_username, cn.author_full_name,
-        cn.author_role, cn.created_at,
+        cn.author_role, cn.source, cn.recorded_at, cn.created_at,
         p.patient_name, p.age, p.gender, p.ward_name, p.bed_number,
         (SELECT COUNT(*)::int FROM bcp_clinical_note c2 WHERE c2.tenant_id = cn.tenant_id AND c2.mrn = cn.mrn) AS total_notes
       FROM bcp_clinical_note cn
@@ -86,12 +92,12 @@ export class ClinicalNoteService {
         WHERE ba.tenant_id = cn.tenant_id AND ba.mrn = cn.mrn
         LIMIT 1
       ) p ON true
-      WHERE cn.tenant_id = ${tenantId} ${noteTypeFilter} ${searchFilter}
-      ORDER BY cn.mrn, cn.created_at DESC
+      WHERE cn.tenant_id = ${tenantId} ${noteTypeFilter} ${sourceFilter} ${searchFilter}
+      ORDER BY cn.mrn, cn.recorded_at DESC
     `;
 
     const sorted = latestNotes.sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      (a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime(),
     );
 
     const total = sorted.length;
@@ -113,6 +119,8 @@ export class ClinicalNoteService {
         authorUsername: n.author_username,
         authorFullName: n.author_full_name,
         authorRole: n.author_role,
+        source: n.source,
+        recordedAt: n.recorded_at,
         createdAt: n.created_at,
         totalNotes: n.total_notes,
       })),
@@ -127,6 +135,10 @@ export class ClinicalNoteService {
       where.noteType = dto.noteType;
     }
 
+    if (dto.source) {
+      where.source = dto.source;
+    }
+
     const page = dto.page || 1;
     const limit = dto.limit || 50;
     const skip = (page - 1) * limit;
@@ -134,7 +146,7 @@ export class ClinicalNoteService {
     const [notes, total] = await Promise.all([
       this.prisma.bcpClinicalNote.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { recordedAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -152,6 +164,8 @@ export class ClinicalNoteService {
         authorUsername: n.authorUsername,
         authorFullName: n.authorFullName,
         authorRole: n.authorRole,
+        source: n.source,
+        recordedAt: n.recordedAt,
         createdAt: n.createdAt,
       })),
       meta: { page, limit, total },

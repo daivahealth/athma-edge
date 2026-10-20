@@ -94,13 +94,24 @@ Patient search, clinical profile, and temporary patient registration endpoints.
       "bloodGroup": "O+",
       "primaryDiagnosis": "Acute appendicitis",
       "highRiskFlags": "Fall risk, DVT prophylaxis",
-      "latestVitals": {
-        "bp": "120/80",
-        "pulse": 72,
-        "temp": 37.2,
-        "spo2": 98,
-        "rr": 16
-      },
+      "latestVitals": [
+        {
+          "recordedAt": "2026-05-16T08:00:00Z",
+          "bp": "120/80 mmHg",
+          "pulse": "72 bpm",
+          "temp": "37.2C",
+          "spo2": "98%",
+          "rr": "16/min"
+        },
+        {
+          "recordedAt": "2026-05-16T07:00:00Z",
+          "bp": "122/82 mmHg",
+          "pulse": "75 bpm",
+          "temp": "37.4C",
+          "spo2": "97%",
+          "rr": "17/min"
+        }
+      ],
       "activeMedications": [
         {"name": "Ceftriaxone", "dose": "1g", "route": "IV", "frequency": "BD"}
       ],
@@ -109,6 +120,22 @@ Patient search, clinical profile, and temporary patient registration endpoints.
       ],
       "criticalResults": "Potassium 5.8 mEq/L",
       "handoverNotes": "Monitor K+ levels, repeat in 4 hours",
+      "intakeOutputChart": {
+        "intake": {
+          "NG/OG": {
+            "data": { "total": { "value": 150.0 }, "2026-10-12T10:00": { "value": 100.0 } },
+            "record": { "Water": { "total": { "value": 150.0 }, "2026-10-12T10:00": { "latestId": 4490784, "value": 100.0 } } }
+          },
+          "Total Intake": { "data": { "total": { "value": 150.0 }, "2026-10-12T10:00": { "value": 100.0 } } }
+        },
+        "output": {
+          "Urine": {
+            "data": { "total": { "value": 110.0 }, "2026-10-12T15:00": { "value": 110.0 } },
+            "record": { "Urine": { "total": { "value": 110.0 }, "2026-10-12T15:00": { "latestId": 4490787, "value": 110.0 } } }
+          },
+          "Total Output": { "data": { "total": { "value": 110.0 }, "2026-10-12T15:00": { "value": 110.0 } } }
+        }
+      },
       "lastClinicalUpdateAt": "2026-05-16T08:00:00Z",
       "lastSyncedAt": "2026-05-16T08:30:00Z"
     },

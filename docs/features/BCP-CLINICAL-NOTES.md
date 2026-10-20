@@ -27,6 +27,8 @@ During a cloud HIS outage, clinical staff need to document care activity — ver
 - **Free-text, not structured**: Notes are plain text, not structured orders. They document what was communicated or decided, not executable orders.
 - **Available on all patients**: Both synced patients and BCP temporary patients can have clinical notes.
 - **Author denormalized**: Author name and role are captured at creation time from the JWT and stored on the note record.
+- **Source tracked**: Every note stores `source` (`VARCHAR`), always `"BCP"` for notes created via the Add Note button, identifying the originating system.
+- **Recorded timestamp**: `recordedAt` stores when the note was recorded, in addition to `createdAt`, and is shown in the UI.
 - **Max 5000 characters** per note.
 
 ## UI
@@ -49,7 +51,10 @@ During a cloud HIS outage, clinical staff need to document care activity — ver
 
 ### Patient Profile Tab
 - Clinical Notes tab appears on every patient profile (synced and temporary)
-- Same note list + create dialog functionality
+- Note list shows note type, author, `source`, and `recordedAt` (newest first)
+- Filter by note type and by `source` (All Sources / BCP)
+- Add Note button opens create dialog
+- Download PDF button exports the currently loaded notes with `source: "BCP"` as a printable PDF (via browser print dialog); disabled when no BCP notes are present
 
 ## API Endpoints
 

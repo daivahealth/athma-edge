@@ -25,6 +25,8 @@ export interface ClinicalNote {
   authorUsername: string;
   authorFullName: string | null;
   authorRole: string;
+  source: string;
+  recordedAt: string;
   createdAt: string;
   totalNotes?: number;
 }
@@ -39,6 +41,7 @@ export interface CreateClinicalNoteRequest {
 export interface ClinicalNoteListParams {
   q?: string;
   noteType?: BcpNoteType;
+  source?: string;
   page?: number;
   limit?: number;
 }

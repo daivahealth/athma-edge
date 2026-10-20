@@ -179,8 +179,11 @@ export default function ClinicalNotesListPage() {
                           <Badge variant={NOTE_TYPE_VARIANT[note.noteType]} className="text-[11px]">
                             {NOTE_TYPE_LABELS[note.noteType]}
                           </Badge>
-                          <span className="text-xs text-muted-foreground" title={formatDateTime(note.createdAt)}>
-                            {timeAgo(note.createdAt)}
+                          <Badge variant="outline" className="text-[11px]">
+                            {note.source}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground" title={formatDateTime(note.recordedAt)}>
+                            {timeAgo(note.recordedAt)}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             by {note.authorFullName || note.authorUsername}

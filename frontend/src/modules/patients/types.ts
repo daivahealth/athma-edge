@@ -42,11 +42,12 @@ export interface ClinicalProfile {
     bloodGroup: string | null;
     primaryDiagnosis: string | null;
     highRiskFlags: string | null;
-    latestVitals: Record<string, any> | null;
+    latestVitals: Record<string, any>[] | Record<string, any> | null;
     activeMedications: any[] | null;
     pendingInvestigations: any[] | null;
     criticalResults: string | null;
     handoverNotes: string | null;
+    intakeOutputChart: Record<string, any> | null;
     lastClinicalUpdateAt: string | null;
     lastSyncedAt: string | null;
   } | null;

@@ -69,7 +69,7 @@ export class AuditInterceptor implements NestInterceptor {
     if (method === 'POST' && path.includes('/auth/login')) return 'LOGIN_SUCCESS';
     if (method === 'POST' && path.includes('/auth/logout')) return 'LOGOUT';
     if (method === 'GET' && path.includes('/bcp/patients/search')) return 'PATIENT_SEARCHED';
-    if (method === 'GET' && path.match(/\/bcp\/patients\/[^/]+\/profile/)) return 'PATIENT_VIEWED';
+    if (method === 'GET' && path.match(/\/bcp\/patients\/[^/]+\/(profile|investigation-results)/)) return 'PATIENT_VIEWED';
     if (method === 'GET' && path.match(/\/bcp\/documents\/[^/]+\/download/)) return 'PDF_VIEWED';
     if (method === 'POST' && path.includes('/bcp/patients/register-temp')) return 'TEMP_PATIENT_CREATED';
     if (method === 'PATCH' && path.match(/\/bcp\/patients\/[^/]+\/demographics/)) return 'TEMP_PATIENT_UPDATED';

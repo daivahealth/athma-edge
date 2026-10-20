@@ -14,6 +14,11 @@ export class ListClinicalNotesDto {
   @IsOptional()
   noteType?: BcpNoteType;
 
+  @ApiPropertyOptional({ description: 'Filter by note source, e.g. BCP' })
+  @IsString()
+  @IsOptional()
+  source?: string;
+
   @ApiPropertyOptional({ default: 1 })
   @Type(() => Number)
   @IsInt()

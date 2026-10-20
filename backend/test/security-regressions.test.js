@@ -32,3 +32,13 @@ test('bootstrap enables rate limiting and secure middleware', () => {
   assert.match(source, /helmet\(/);
   assert.match(source, /cookieParser\(/);
 });
+
+test('investigation results endpoint is read-only and tenant-scoped', () => {
+  const controller = read('src/modules/investigation-result/investigation-result.controller.ts');
+  assert.doesNotMatch(controller, /@Post\(|@Put\(|@Patch\(|@Delete\(/);
+  assert.match(controller, /@Get\('patients\/:mrn\/investigation-results'\)/);
+
+  const service = read('src/modules/investigation-result/investigation-result.service.ts');
+  assert.match(service, /where:\s*{\s*mrn,\s*tenantId,\s*category\s*}/);
+});
+

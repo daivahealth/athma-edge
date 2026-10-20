@@ -37,12 +37,14 @@ POST /api/bcp/patients/:mrn/notes
     "authorUsername": "dr.smith",
     "authorFullName": "Dr. Smith",
     "authorRole": "DOCTOR",
+    "source": "BCP",
+    "recordedAt": "2026-05-20T10:30:00.000Z",
     "createdAt": "2026-05-20T10:30:00.000Z"
   }
 }
 ```
 
-Author information is automatically captured from the JWT. The `authorFullName` is looked up from `bcp_user` at creation time.
+Author information is automatically captured from the JWT. The `authorFullName` is looked up from `bcp_user` at creation time. `source` is always `"BCP"` for notes created through this app, and `recordedAt` stores the timestamp the note was recorded (equal to `createdAt` at creation time).
 
 ### List Notes for Patient
 
@@ -57,10 +59,11 @@ GET /api/bcp/patients/:mrn/notes?noteType=&page=&limit=
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | noteType | enum | — | Filter by note type |
+| source | string | — | Filter by note source, e.g. `BCP` |
 | page | number | 1 | Page number |
 | limit | number | 20 | Items per page |
 
-**Response:** `200 OK` with paginated list, ordered by `createdAt DESC`.
+**Response:** `200 OK` with paginated list, ordered by `recordedAt DESC`.
 
 ### List All Notes (across patients)
 
@@ -76,6 +79,7 @@ GET /api/bcp/clinical-notes?q=&noteType=&page=&limit=
 |-------|------|---------|-------------|
 | q | string | — | Search by patient name or MRN |
 | noteType | enum | — | Filter by note type |
+| source | string | — | Filter by note source, e.g. `BCP` |
 | page | number | 1 | Page number |
 | limit | number | 20 | Items per page |
 

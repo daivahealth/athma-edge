@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "bcp_clinical_note"
+  ADD COLUMN "source" VARCHAR(20) NOT NULL DEFAULT 'BCP',
+  ADD COLUMN "recorded_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP;

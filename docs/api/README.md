@@ -29,6 +29,7 @@ Obtain a token via `POST /api/auth/login`.
 | Clinical Profile | Yes | Yes | Yes |
 | PDF View/Download | Yes | Yes | Yes |
 | BCP Clinical Notes | Yes | Yes | Yes |
+| Investigation Results | Yes | Yes | Yes |
 | Temp Patient Registration | Yes | Yes | Yes |
 | User Management | No | No | Yes |
 | Sync Status | No | No | Yes |
@@ -39,6 +40,7 @@ Obtain a token via `POST /api/auth/login`.
 - [Auth API](AUTH-API.md) — login, current user, logout
 - [Patient API](PATIENT-API.md) — search, clinical profile, temp patient registration
 - [Clinical Notes API](CLINICAL-NOTES-API.md) — create and list BCP clinical notes
+- [Investigation Results API](INVESTIGATION-RESULTS-API.md) — fetch synced LAB investigation results by MRN
 - [Document API](DOCUMENT-API.md) — PDF list, download
 - [Admin API](ADMIN-API.md) — users, sync status, audit
 - [Response Formats](API-RESPONSE-FORMATS.md) — standard envelopes and errors

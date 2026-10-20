@@ -39,6 +39,14 @@ enum SyncComponent {
   @@map("sync_component_enum")
 }
 
+enum InvestigationCategory {
+  LAB
+  RAD
+  OTHER
+
+  @@map("investigation_category_enum")
+}
+
 enum SyncStatus {
   SUCCESS
   FAILED
@@ -145,6 +153,7 @@ model BcpPatientClinicalProfile {
   pendingInvestigations Json?     @map("pending_investigations")
   criticalResults       String?   @map("critical_results") @db.Text
   handoverNotes         String?   @map("handover_notes") @db.Text
+  intakeOutputChart     Json?     @map("intake_output_chart")
   lastClinicalUpdateAt  DateTime? @map("last_clinical_update_at") @db.Timestamp(6)
   lastSyncedAt          DateTime  @map("last_synced_at") @db.Timestamp(6)
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
@@ -180,6 +189,28 @@ model BcpPatientPdfDocument {
   @@index([mrn], name: "idx_pdf_document_mrn")
   @@index([documentType], name: "idx_pdf_document_type")
   @@map("bcp_patient_pdf_document")
+}
+
+// ─── bcp_patient_investigation_result ────────────────────────────────────────
+
+model BcpPatientInvestigationResult {
+  id           BigInt                @id @default(autoincrement())
+  tenantId     String                @map("tenant_id") @db.VarChar(100)
+  sourceSystem String                @map("source_system") @db.VarChar(100)
+  patientId    String?               @map("patient_id") @db.VarChar(100)
+  mrn          String                @db.VarChar(50)
+  uhid         String?               @db.VarChar(50)
+  encounterId  String?               @map("encounter_id") @db.VarChar(100)
+  visitNumber  String?               @map("visit_number") @db.VarChar(50)
+  category     InvestigationCategory
+  resultData   Json                  @map("result_data")
+  lastSyncedAt DateTime              @map("last_synced_at") @db.Timestamp(6)
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@unique([tenantId, mrn, category], name: "uq_investigation_result_tenant_mrn_category")
+  @@index([mrn], name: "idx_investigation_result_mrn")
+  @@map("bcp_patient_investigation_result")
 }
 
 // ─── bcp_sync_status ─────────────────────────────────────────────────────────
@@ -293,6 +324,8 @@ model BcpClinicalNote {
   authorUsername String      @map("author_username") @db.VarChar(100)
   authorFullName String?     @map("author_full_name") @db.VarChar(255)
   authorRole     String      @map("author_role") @db.VarChar(50)
+  source         String      @default("BCP") @db.VarChar(20)
+  recordedAt     DateTime    @default(now()) @map("recorded_at") @db.Timestamp(6)
   createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
 
   @@index([tenantId, mrn], name: "idx_clinical_note_tenant_mrn")

@@ -117,8 +117,11 @@ export default function PatientNotesDetailPage() {
                     <Badge variant="outline" className="text-xs">
                       {note.authorRole}
                     </Badge>
-                    <span className="text-xs text-muted-foreground ml-auto" title={formatDateTime(note.createdAt)}>
-                      {timeAgo(note.createdAt)}
+                    <Badge variant="outline" className="text-xs">
+                      {note.source}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground ml-auto" title={formatDateTime(note.recordedAt)}>
+                      {timeAgo(note.recordedAt)}
                     </span>
                   </div>
                   <p className="text-sm whitespace-pre-wrap">{note.content}</p>

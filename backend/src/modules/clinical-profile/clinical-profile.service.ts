@@ -61,6 +61,7 @@ export class ClinicalProfileService {
             pendingInvestigations: clinicalProfile.pendingInvestigations,
             criticalResults: clinicalProfile.criticalResults,
             handoverNotes: clinicalProfile.handoverNotes,
+            intakeOutputChart: clinicalProfile.intakeOutputChart,
             lastClinicalUpdateAt: clinicalProfile.lastClinicalUpdateAt,
             lastSyncedAt: clinicalProfile.lastSyncedAt,
           }
