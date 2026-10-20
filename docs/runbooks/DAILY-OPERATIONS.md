@@ -44,8 +44,8 @@ When the main cloud HIS comes back online:
 
 1. Verify n8n sync resumes automatically (check sync status dashboard)
 2. Confirm data freshness returns to normal (<2 minute latency)
-3. Manually reconcile BCP Clinical Notes into the primary HIS (review notes created during the outage)
-4. Manually reconcile BCP Temporary Patients — register walk-in patients in the primary HIS and map their BCP MRNs
+3. Run the n8n reconciliation workflow, scoped to the outage window, to write BCP Clinical Notes and BCP Temporary Patients back into the primary HIS
+4. Work the exception list it returns by hand — identity merges, rejected records and ambiguous matches (see [Business Continuity Plan](BUSINESS-CONTINUITY-PLAN.md))
 5. Clinical staff can resume using the primary HIS
 6. BCP system continues to sync as a backup (no action needed to "turn it off")
 
