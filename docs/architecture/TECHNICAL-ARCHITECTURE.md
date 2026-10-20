@@ -72,7 +72,7 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 
 ### n8n (Sync/ETL)
 - Runs 4 workflows on cron schedules
-- Pulls data from source HIS API
+- Pulls data from the source HIS database over Postgres
 - Upserts directly into PostgreSQL via Postgres nodes
 - Downloads PDF files to local storage
 - Updates sync status after each run
@@ -87,10 +87,12 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 
 ### Sync Flow (n8n → PostgreSQL)
 1. n8n cron triggers workflow
-2. HTTP Request node pulls data from source HIS API
+2. Postgres node reads from the **source HIS database** — the workflows query the HIS directly, they do not call an HIS HTTP API
 3. Function node transforms data to BCP schema
 4. Postgres node upserts into target table
 5. Postgres node updates `bcp_sync_status`
+
+The source-HIS queries in workflows 01–03 are still `TODO` placeholders; the BCP-side upserts are real.
 
 ### Read Flow (User → UI → API → PostgreSQL)
 1. User logs in via BCP UI → JWT issued
