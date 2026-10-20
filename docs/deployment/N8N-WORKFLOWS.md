@@ -10,6 +10,7 @@ Sync workflow design for the Athma Edge BCP application. n8n is the sole mechani
 | 2 | Clinical Profile Sync | 1-2 minutes | bcp_patient_clinical_profile |
 | 3 | PDF Document Sync | 5-10 minutes | bcp_patient_pdf_document |
 | 4 | Sync Status Heartbeat | 1 minute | bcp_sync_status |
+| 5 | BCP Reconciliation (write-back) | Manual, after stand-down | Source HIS (outbound) |
 
 ## Workflow 1: Active Patient Sync
 
@@ -58,6 +59,60 @@ Sync workflow design for the Athma Edge BCP application. n8n is the sole mechani
 1. **Postgres** — Update `bcp_sync_status` set `last_attempt_at=now()` for all components
 2. **Function** — Check if any component's `last_successful_sync_at` is stale
 3. **Postgres** — Mark stale components as status=FAILED with error_message
+
+## Workflow 5: BCP Reconciliation (write-back)
+
+The only outbound workflow. Everything else pulls from the HIS; this one pushes to it.
+
+| Property | Value |
+|----------|-------|
+| Trigger | Manual, run by the BCP coordinator after stand-down |
+| Scope | The outage window — start and end timestamps are inputs, not defaults |
+| Reads | `bcp_clinical_note`, `bcp_active_patient` where `source_system = 'BCP_LOCAL'` |
+| Writes | Source HIS, via its write APIs |
+| Output | Records written, records rejected, records needing a human decision |
+
+Rules:
+
+- Never runs on a cron. A write-back during an outage would push into an HIS that is still down or still recovering.
+- Run once per outage window. An unscoped re-run risks duplicating notes already written back.
+- Notes are written back as documentation only — never promoted to executable orders.
+- Identity merges are out of scope. A walk-in who already exists in the HIS is returned as an exception for Medical Records to merge by hand.
+- The edge records are not modified or deleted by the run. Notes stay append-only and temp patients are never deleted.
+
+The workflow export is not yet checked into `n8n/workflows/`, which holds the four inbound sync workflows only.
+
+## Timezone (required for cron/schedule triggers)
+
+Schedule Trigger nodes evaluate cron expressions in n8n's **instance timezone**, set by
+`GENERIC_TIMEZONE`. If it is unset, n8n falls back to `America/New_York` — every cron then
+fires at the wrong local wall-clock time (a `0 5 * * *` trigger runs mid-afternoon IST).
+This failure mode is silent: the workflow executes successfully, so container logs show no
+errors, only an unexpected execution time.
+
+`docker-compose.yml` sets both variables on the `n8n` service:
+
+```yaml
+GENERIC_TIMEZONE: ${TZ:-Asia/Kolkata}   # cron/schedule evaluation
+TZ: ${TZ:-Asia/Kolkata}                 # container clock, log timestamps
+```
+
+Override per site with `TZ` in `.env`. After changing it, recreate the container so
+registered triggers are rebuilt — a plain restart is not enough:
+
+```bash
+docker compose up -d --force-recreate n8n
+```
+
+Verify, then confirm the workflow's next scheduled run in the n8n UI:
+
+```bash
+docker compose exec n8n date
+```
+
+Individual workflows can override the instance default in **Workflow settings → Timezone**.
+A workflow saved before this fix may have an explicit stale timezone recorded — check
+there if a trigger still fires at the wrong time after recreating the container.
 
 ## Configuration
 

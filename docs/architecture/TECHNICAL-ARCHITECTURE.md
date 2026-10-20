@@ -127,6 +127,6 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 - No Kafka, Kubernetes, Elasticsearch, or Redis
 - Synced clinical data is read-only; local writes limited to BCP Clinical Notes (append-only) and Temp Patient Registration
 - No structured order entry, medication prescribing, or billing
-- No automated reconciliation — local data requires manual reconciliation when HIS recovers
+- Write-back to the HIS is out-of-band: a separate n8n reconciliation workflow run after recovery, never during an outage, with a manual exception list for what it cannot map
 - All external IDs are VARCHAR (not UUID)
 - Soft delete only (no hard deletes for patient/clinical records)

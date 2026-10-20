@@ -21,7 +21,7 @@ It covers the clinical continuity window only: the period between loss of the pr
 
 - Disaster recovery of the cloud HIS itself — Athma Edge is a continuity tool, not a DR system and not an EMR replacement
 - Structured order entry, medication prescribing, results entry and billing — none of these exist in Athma Edge; notes are documentation, not executable orders
-- Automated reconciliation back into the HIS — all reconciliation is manual
+- The build and operation of the n8n reconciliation workflow itself — this plan says when it runs and who owns its output, not how it is implemented
 - Non-clinical continuity (power, network, facilities, staffing surge), which belongs to the hospital's wider emergency plan
 
 **Audience:** clinical staff (doctors, nurses), nursing and medical leadership, the IT/HIS on-call team, and the hospital emergency operations lead.
@@ -44,7 +44,7 @@ Recovery points come from the n8n sync frequencies: active patients every 30–6
 
 - No new vitals, results, medications or documents arrive after the outage starts — everything on screen is a frozen snapshot.
 - Outpatients who register after the outage starts are not in the local data and must be registered as temporary patients.
-- Everything written locally must be re-entered into the HIS by hand afterwards.
+- Everything written locally has to be returned to the HIS after recovery, by the reconciliation workflow and by hand for the exceptions it leaves.
 
 **Open question:** the hospital has not yet set a formal maximum tolerable downtime for this plan, or a target for how long reconciliation may lag HIS restoration. Both should be agreed and recorded here.
 
@@ -136,7 +136,7 @@ An outage breaks only the link at the top. Everything below it keeps running on 
 | Synced PDFs: clinical summary, lab, radiology, MAR, nursing notes, discharge summary, consent | Documents issued after the last sync |
 | Writing free-text clinical notes | Editing or deleting a note once saved |
 | Registering walk-in patients | Deleting a temporary patient, or merging into the HIS |
-| Audit log of every access and write | Any automatic write-back to the HIS |
+| Audit log of every access and write | Write-back to the HIS while the HIS is still down |
 
 ## Downtime clinical workflows
 
@@ -191,39 +191,49 @@ During an outage, synced data stops advancing at the moment the last successful 
 
 ## Recovery and reconciliation
 
-Nothing written during the outage flows back to the HIS. **All reconciliation is manual**, and it is the part of this plan most likely to be skipped under pressure. Treat it as clinical work, not administration.
+Reconciliation depends on the HIS exposing write APIs. Where it does, an n8n write-back workflow pushes what was created during the outage into the HIS once it is reachable again; **for Athma this reconciliation workflow exists in n8n**. Where an HIS offers no write APIs, the same work has to be done by hand.
+
+An automated run does not finish the job. The script moves what it can map cleanly; duplicates, ambiguous matches and anything it rejects come back as a manual exception list. Plan for both.
 
 ### Restoration
 
 1. Confirm the HIS is back and stable with the HIS vendor / cloud team.
-2. Watch the admin Sync Status dashboard — n8n resumes on its own cron schedule; no manual restart should be needed.
+2. Watch the admin Sync Status dashboard — the inbound sync workflows resume on their own cron schedule; no manual restart should be needed.
 3. Confirm all three components return to SUCCESS and freshness drops under two minutes.
 4. Spot-check a handful of patients against the HIS before telling staff to switch back.
 5. Declare stand-down and tell all clinical areas to resume using the primary HIS.
+6. Run the n8n reconciliation workflow, scoped to the outage window, and capture its result: records written, records rejected, records needing a human decision.
 
 If sync does not resume by itself, follow [Sync Troubleshooting](SYNC-TROUBLESHOOTING.md) before declaring stand-down.
 
 ### Reconciliation
 
-Owned by Medical Records / HIM, with the ward in-charge for each area and the originating clinician for anything clinical.
+The automated run is owned by the BCP coordinator. The exception list it produces is owned by Medical Records / HIM, with the ward in-charge for each area and the originating clinician for anything clinical.
 
-| Item | Source in Athma Edge | Action in the HIS |
-|------|---------------------|-------------------|
-| Clinical notes written during the outage | Clinical notes list, filtered to the outage window | Re-enter into the patient's HIS record, preserving original author, role and timestamp |
-| Verbal and phone orders captured as Order notes | Order-type notes | Have the responsible clinician confirm and enter as a real order; mark anything already actioned |
-| Medication given during the outage | Medication and Nursing notes, plus the paper MAR | Reconcile against the HIS MAR; resolve any discrepancy with the ward |
-| Walk-in patients | Patient search, TEMP badge / `BCP_LOCAL` source | Register in the HIS, then record the mapping from `BCP-YYYYMMDD-NNN` to the issued HIS MRN |
-| Walk-ins who turn out to be existing patients | Flagged duplicates | Merge into the existing HIS record; keep the BCP MRN in the merge note |
-| Incident reports | Incident-type notes | Raise through the hospital's normal incident system |
+| Item | Source in Athma Edge | How it returns to the HIS |
+|------|---------------------|---------------------------|
+| Clinical notes written during the outage | Clinical notes list, filtered to the outage window | Written back by the n8n workflow, preserving original author, role and timestamp |
+| Verbal and phone orders captured as Order notes | Order-type notes | Written back as documentation only. A note is never promoted to an executable order by the script — the responsible clinician confirms and enters the real order |
+| Medication given during the outage | Medication and Nursing notes, plus the paper MAR | Notes written back by the script; the MAR itself is reconciled by the ward against the HIS MAR |
+| Walk-in patients | Patient search, TEMP badge / `BCP_LOCAL` source | Registered in the HIS by the script, which records the mapping from `BCP-YYYYMMDD-NNN` to the issued HIS MRN |
+| Walk-ins who turn out to be existing patients | Flagged duplicates | Manual — the script cannot safely merge identities. HIM merges into the existing HIS record and keeps the BCP MRN in the merge note |
+| Records the script rejects or cannot match | Reconciliation run output | Manual — worked through as the exception list |
+| Incident reports | Incident-type notes | Manual — raised through the hospital's normal incident system |
 
 **Rules**
 
+- Run the reconciliation workflow once, scoped to the outage window, and keep its run record. Re-running an unscoped workflow risks duplicating notes already written back.
 - Reconcile every note, including ones that turned out to be clinically inconsequential. The BCP record is append-only and nothing can be deleted to tidy it up.
-- Keep the BCP MRN to HIS MRN mapping as a durable record. Nothing in Athma Edge stores it.
-- Work ward by ward and sign each area off, so partial completion is visible.
+- The BCP MRN to HIS MRN mapping is produced by the workflow. Keep it as a durable record — nothing in Athma Edge stores it.
+- Work the exception list ward by ward and sign each area off, so partial completion is visible.
+- Nothing is reconciled until it is confirmed present in the HIS. Treat the workflow's own success count as a claim to verify, not proof.
 - Athma Edge keeps running as a backup after recovery. It is not switched off, and the notes stay in it permanently.
 
-**Open question:** who signs off that reconciliation is complete, and within how many hours of stand-down? This needs a named owner and a deadline before the plan is approved.
+**Open questions**
+
+- Who signs off that reconciliation is complete, and within how many hours of stand-down?
+- The reconciliation workflow is not in this repository — `n8n/workflows/` holds only the four inbound sync workflows. It needs exporting there. Its behaviour is documented in [n8n Workflows](../deployment/N8N-WORKFLOWS.md) and [ADR-0002](../ADR/ADR-0002-read-only-phase1.md).
+- Which HIS write APIs the workflow depends on, and what it does when one is unavailable, should be recorded so a different HIS deployment knows what it must provide.
 
 ## Security, access and audit
 

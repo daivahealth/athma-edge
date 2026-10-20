@@ -4,7 +4,7 @@ Free-text clinical documentation created locally during BCP events. This is a lo
 
 ## Purpose
 
-During a cloud HIS outage, clinical staff need to document care activity — verbal orders, assessments, handover notes, incident reports, etc. BCP Clinical Notes provide append-only free-text documentation that can be manually reconciled into the HIS when it recovers.
+During a cloud HIS outage, clinical staff need to document care activity — verbal orders, assessments, handover notes, incident reports, etc. BCP Clinical Notes provide append-only free-text documentation, written back into the HIS by the n8n reconciliation workflow when it recovers.
 
 ## Note Types
 
