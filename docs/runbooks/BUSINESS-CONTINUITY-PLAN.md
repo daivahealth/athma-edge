@@ -136,6 +136,26 @@ An outage breaks only the link at the top. Everything below it keeps running on 
 | Registering walk-in patients | Deleting a temporary patient, or merging into the HIS |
 | Audit log of every access and write | Write-back to the HIS while the HIS is still down |
 
+### Edge server sizing
+
+The edge server is sized for the outage, not the quiet day. On a normal day it is nearly idle; during an event it carries the clinical read load of the entire hospital — the load the HIS normally handles.
+
+| Hospital | Beds | vCPU | RAM | Storage |
+|----------|------|------|-----|---------|
+| Small | < 200 | 8 | 16 GB | 1 TB SSD / flash |
+| Medium | 200–500 | 16 | 32 GB | 1 TB SSD / flash |
+| Large | 500–1,000+ | 16 | 64 GB | 1 TB SSD / flash |
+
+A Docker-capable host sited inside the hospital. Storage must be SSD or flash — PostgreSQL and PDF serving are both random-read workloads, hit hardest at the moment the hospital depends on them.
+
+Two siting rules matter more than the figures:
+
+- The edge server must **not** sit behind the same link, router or firewall path whose failure causes the outage. One that shares a single point of failure with the HIS connection is not a continuity system.
+- It must stay reachable from every clinical area on the hospital LAN without internet access.
+
+Disk is consumed almost entirely by synced PDFs, which accumulate with no retention policy. 1 TB buys years, not permanence — see [Hardware Requirements](../deployment/DEPLOYMENT-GUIDE.md#hardware-requirements) for the growth model and the monitoring threshold.
+
+
 ## Downtime clinical workflows
 
 Four things staff can do during an outage. Everything else continues on the hospital's existing paper downtime process.
