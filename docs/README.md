@@ -54,6 +54,7 @@ Documentation entrypoint for the Athma Edge BCP (Business Continuity Plan) appli
 - [Audit Logging](security/AUDIT-LOGGING.md) — event types, automatic logging
 
 ### Runbooks
+- [Business Continuity Plan](runbooks/BUSINESS-CONTINUITY-PLAN.md) — hospital-facing BCP: activation, downtime workflows, recovery, reconciliation
 - [Initial Setup](runbooks/INITIAL-SETUP.md) — first-time deployment
 - [Sync Troubleshooting](runbooks/SYNC-TROUBLESHOOTING.md) — n8n failure diagnosis
 - [Daily Operations](runbooks/DAILY-OPERATIONS.md) — rollover, monitoring
