@@ -1,0 +1,224 @@
+{
+  "name": "BCP - Reconciliation (Write-Back)",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "windowStart",
+              "value": "={{ $json.windowStart }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "windowEnd",
+              "value": "={{ $json.windowEnd }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "dryRun",
+              "value": "={{ $json.dryRun !== false }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Outage Window",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Refuses to run unless the window is explicit and the HIS is accepting writes.\n// BCP plan rules 1 and 2: never during an outage, always scoped.\nconst w = $input.first().json;\nif (!w.windowStart || !w.windowEnd) {\n  throw new Error('windowStart and windowEnd are required. An unscoped run can duplicate a chart.');\n}\nif (new Date(w.windowStart) >= new Date(w.windowEnd)) {\n  throw new Error('windowStart must be before windowEnd.');\n}\n\n// TODO: Replace with a real readiness check against the source HIS.\n// Must confirm the HIS is not only up but accepting writes - an HIS still\n// replaying its own recovery queue should block this run.\n// See docs/api/HIS-RECONCILIATION-CONTRACT.md, capability 7.\nconst hisWritesAccepted = false;\nif (!hisWritesAccepted) {\n  throw new Error('HIS readiness check not implemented. Refusing to write.');\n}\n\nreturn [{ json: w }];"
+      },
+      "name": "Guard: Window And HIS Readiness",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- BCP temporary patients registered during the outage window.\n-- The edge record is never modified by this workflow (BCP plan rule 8).\nSELECT\n  id, mrn, patient_name, gender, date_of_birth, mobile_number,\n  care_setting, ward_name, bed_number, consultant_name,\n  visit_number, business_date, active_from, created_at\nFROM bcp_active_patient\nWHERE source_system = 'BCP_LOCAL'\n  AND tenant_id = '{{ $env.DEFAULT_TENANT_ID }}'\n  AND created_at >= '{{ $json.windowStart }}'::timestamp\n  AND created_at <  '{{ $json.windowEnd }}'::timestamp\nORDER BY created_at;",
+        "additionalFields": {}
+      },
+      "name": "Read Temp Patients",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        850,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "BCP_DB_CREDENTIAL_ID",
+          "name": "BCP Edge DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// TODO: Implement against the source HIS.\n// Capabilities 1 and 2 of docs/api/HIS-RECONCILIATION-CONTRACT.md.\n//\n// For each BCP temporary patient:\n//   1. Match against the HIS on mobile, name + date_of_birth, uhid.\n//   2. A confident single match is NOT merged here. Identity merges are\n//      always a human decision - emit it as an exception (BCP plan rule 5).\n//   3. No match: register in the HIS, idempotency key = the BCP mrn,\n//      and record the BCP mrn -> HIS mrn mapping on the item.\n//   4. Create a backdated encounter for the new patient (capability 4).\n//\n// NOTE: the inbound sync workflows reach the source HIS over Postgres,\n// not HTTP. Bind this to whichever transport the HIS actually offers.\n\nconst dryRun = $('Outage Window').first().json.dryRun;\n\nreturn $input.all().map(item => ({\n  json: {\n    kind: 'TEMP_PATIENT',\n    bcpMrn: item.json.mrn,\n    hisMrn: null,\n    outcome: 'EXCEPTION',\n    reason: dryRun\n      ? 'dry run - no write attempted'\n      : 'HIS patient match and register not implemented',\n    source: item.json,\n  },\n}));"
+      },
+      "name": "Match And Register Patients In HIS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Every BCP clinical note written during the outage window, for synced\n-- and temporary patients alike. Append-only: nothing here is edited.\nSELECT\n  id, mrn, encounter_id, visit_number, note_type, content,\n  author_username, author_full_name, author_role, created_at\nFROM bcp_clinical_note\nWHERE tenant_id = '{{ $env.DEFAULT_TENANT_ID }}'\n  AND created_at >= '{{ $('Outage Window').first().json.windowStart }}'::timestamp\n  AND created_at <  '{{ $('Outage Window').first().json.windowEnd }}'::timestamp\nORDER BY created_at;",
+        "additionalFields": {}
+      },
+      "name": "Read Clinical Notes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1250,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "BCP_DB_CREDENTIAL_ID",
+          "name": "BCP Edge DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// TODO: Implement against the source HIS.\n// Capabilities 3, 5 and 6 of docs/api/HIS-RECONCILIATION-CONTRACT.md.\n//\n// For each note:\n//   1. Resolve the target encounter (capability 3), using the mapping\n//      produced upstream for temporary patients.\n//   2. Write the note with:\n//        authoredAt   = created_at, BACKDATED. Not the time of this run.\n//        author       = author_full_name + author_role from the note.\n//        sourceSystem = 'ATHMA_EDGE_BCP'\n//        externalRef  = the note id, also the idempotency key.\n//      Losing any of the first three destroys the provenance that made\n//      the note worth keeping. See the contract's non-negotiables.\n//   3. A note is written back as DOCUMENTATION. Never create an order,\n//      prescription or administration record from one, whatever its\n//      note_type says (BCP plan rule 4).\n//   4. Read back by externalRef and only then call it written (rule 6).\n\nconst dryRun = $('Outage Window').first().json.dryRun;\n\nreturn $input.all().map(item => ({\n  json: {\n    kind: 'CLINICAL_NOTE',\n    bcpNoteId: String(item.json.id),\n    mrn: item.json.mrn,\n    noteType: item.json.note_type,\n    authoredAt: item.json.created_at,\n    outcome: 'EXCEPTION',\n    reason: dryRun\n      ? 'dry run - no write attempted'\n      : 'HIS note create not implemented',\n    source: item.json,\n  },\n}));"
+      },
+      "name": "Write Notes To HIS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// BCP plan rule 7: every record ends the run in exactly one of three\n// states. Rule 10: this run record is what sign-off is given against.\nconst w = $('Outage Window').first().json;\nconst patients = $('Match And Register Patients In HIS').all().map(i => i.json);\nconst notes = $input.all().map(i => i.json);\nconst all = patients.concat(notes);\n\nconst count = (outcome) => all.filter(r => r.outcome === outcome).length;\nconst exceptions = all.filter(r => r.outcome === 'EXCEPTION');\n\nif (count('WRITTEN') + count('ALREADY_PRESENT') + exceptions.length !== all.length) {\n  throw new Error('Every record must end in exactly one of three states.');\n}\n\nreturn [{\n  json: {\n    windowStart: w.windowStart,\n    windowEnd: w.windowEnd,\n    dryRun: w.dryRun,\n    ranAt: new Date().toISOString(),\n    tempPatients: patients.length,\n    clinicalNotes: notes.length,\n    written: count('WRITTEN'),\n    alreadyPresent: count('ALREADY_PRESENT'),\n    exceptions: exceptions.length,\n    mrnMapping: patients\n      .filter(p => p.hisMrn)\n      .map(p => ({ bcpMrn: p.bcpMrn, hisMrn: p.hisMrn })),\n    exceptionList: exceptions,\n  },\n}];\n\n// TODO: Persist this run record. bcp_sync_status cannot hold it - its\n// sync_component enum has only ACTIVE_PATIENT, CLINICAL_PROFILE and\n// PDF_DOCUMENT, and bcp_audit_log's event_type enum has no reconciliation\n// event. Adding either is a schema migration. Until then the record lives\n// only in the n8n execution and must be exported for the sign-off."
+      },
+      "name": "Run Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Outage Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outage Window": {
+      "main": [
+        [
+          {
+            "node": "Guard: Window And HIS Readiness",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guard: Window And HIS Readiness": {
+      "main": [
+        [
+          {
+            "node": "Read Temp Patients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Temp Patients": {
+      "main": [
+        [
+          {
+            "node": "Match And Register Patients In HIS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match And Register Patients In HIS": {
+      "main": [
+        [
+          {
+            "node": "Read Clinical Notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Clinical Notes": {
+      "main": [
+        [
+          {
+            "node": "Write Notes To HIS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Notes To HIS": {
+      "main": [
+        [
+          {
+            "node": "Run Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "BCP Sync"
+    }
+  ]
+}

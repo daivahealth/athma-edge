@@ -82,7 +82,13 @@ Rules:
 
 The HIS-side API surface this workflow depends on, and what it does when a capability is missing, is specified in the [HIS Reconciliation Contract](../api/HIS-RECONCILIATION-CONTRACT.md).
 
-The workflow export is not yet checked into `n8n/workflows/`, which holds the four inbound sync workflows only.
+The export is `n8n/workflows/05-bcp-reconciliation.json`. Like workflows 01–03 it is a **template**: the BCP-side reads are real, the HIS-side writes are `TODO` placeholders pending the [Athma-specific mapping](../api/HIS-RECONCILIATION-CONTRACT.md#athma-specific-mapping).
+
+It is deliberately safe to import before that work is done:
+
+- `dryRun` defaults to **true**
+- the readiness guard throws unless a real HIS check is implemented, so an unimplemented workflow cannot write
+- an absent or inverted outage window throws rather than defaulting to "everything"
 
 ## Timezone (required for cron/schedule triggers)
 

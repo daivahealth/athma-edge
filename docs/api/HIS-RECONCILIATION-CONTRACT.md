@@ -4,7 +4,7 @@ The minimum API surface a source HIS/EMR must expose for Athma Edge to write BCP
 
 This is an **outbound** contract: Athma Edge is the client, the HIS is the server. It is the mirror of the inbound sync described in [n8n Workflows](../deployment/N8N-WORKFLOWS.md), and it is consumed by Workflow 5 (BCP Reconciliation).
 
-> **Status:** proposed. Written as the target contract for any HIS deployment. It has not yet been validated against the Athma HIS implementation — see the Athma-specific mapping section at the end.
+> **Status:** proposed. The capabilities, guidelines and degraded modes are settled. The **HTTP payloads below are illustrative, not the Athma API** — see [Transport](#transport) and [Athma-specific mapping](#athma-specific-mapping).
 
 ## Scope
 
@@ -16,6 +16,20 @@ Reconciliation writes back exactly two things, because those are the only two th
 | BCP Temporary Patient (`source_system = 'BCP_LOCAL'`, `BCP-YYYYMMDD-NNN` MRN) | A registered patient, plus an encounter to hang notes on |
 
 Nothing else is written. Synced clinical data was never modified locally, so there is nothing to push back for vitals, medications, investigations or documents.
+
+## Transport
+
+This contract specifies *capabilities*, not a wire protocol. The HTTP shapes below are written out because they are the clearest way to say what each capability must accept and return — they are not a claim about how any particular HIS exposes them.
+
+**The inbound sync in this repository does not use HTTP.** All four sync workflows in `n8n/workflows/` reach the source HIS with Postgres nodes running SQL against the HIS database (`Source HIS Query`, `clinical_profile_view`, `source_documents`), not with HTTP Request nodes. Reconciliation should bind to whichever transport the HIS actually offers, and for a database-bound HIS that means the write side is SQL too.
+
+| Binding | Capability becomes | Idempotency becomes |
+|---------|-------------------|---------------------|
+| HTTP/REST | An endpoint, as written below | A client-supplied key header, or `externalRef` in the body |
+| Database (as the inbound sync uses) | A query, or a stored procedure the HIS vendor supplies | A unique constraint on `external_ref`, with `ON CONFLICT DO NOTHING` and a read-back |
+| Message queue / HL7 / FHIR | A message or resource create | The message control id, or FHIR conditional create |
+
+A **database binding carries a warning the HTTP binding does not**: writing directly into HIS tables bypasses whatever validation, triggers and audit the HIS applies to its own writes. For reads that is tolerable. For writes into a live clinical chart it generally is not — prefer a vendor-supplied procedure or API over raw INSERTs, and if raw INSERTs are the only option, that should be an explicit, documented decision by the HIS owner rather than a default.
 
 ## Required capabilities
 
@@ -184,14 +198,33 @@ Rules the workflow follows regardless of which HIS it is pointed at.
 
 ## Athma-specific mapping
 
-To be completed against the Athma HIS implementation, and the reason [this is still marked proposed](#his-reconciliation-contract):
+### What the repository establishes
 
-- [ ] Which Athma endpoints satisfy capabilities 1–7, with their real paths and payloads
-- [ ] Whether Athma accepts a backdated `authoredAt` and an external author identity
-- [ ] Athma's idempotency mechanism, if it differs from `externalRef`
-- [ ] The BCP note type to Athma note type mapping
-- [ ] Athma's rate limit and batch support
-- [ ] Which degraded modes, if any, apply
+Read off `n8n/workflows/`, not assumed:
+
+| Fact | Evidence |
+|------|----------|
+| The source HIS is reached over **Postgres, not HTTP** | All four sync workflows use `n8n-nodes-base.postgres` nodes against the HIS; none uses an HTTP Request node |
+| The HIS exposes read surfaces shaped as views/tables | `clinical_profile_view`, `source_documents`, and an active-patient query |
+| Tenant context is an n8n environment variable | `$env.DEFAULT_TENANT_ID` throughout |
+| The HIS-side queries are **not implemented** | Workflows 01–03 carry `-- TODO: Replace with actual source HIS query` placeholders |
+
+The last row matters for scoping this work: the inbound integration is itself still a template, so there is no implemented Athma read contract to mirror on the write side yet.
+
+### Still unknown
+
+The inbound workflows reveal read surfaces only. Nothing in the repository establishes anything about Athma's **write** capability, which is what this contract needs:
+
+- [ ] Whether Athma offers a write API, vendor-supplied write procedures, or only raw table access
+- [ ] Which Athma surface satisfies each of capabilities 1–7
+- [ ] Whether a note can be written with a **backdated `authoredAt`** — the single highest-risk unknown
+- [ ] Whether an **external author identity** survives, or everything is attributed to the writing account
+- [ ] Athma's idempotency mechanism
+- [ ] The BCP note type → Athma note type mapping
+- [ ] Rate limit and batch behaviour
+- [ ] Which degraded modes apply
+
+Answering these needs the Athma HIS API or schema documentation, which is not in this repository.
 
 ## Related
 
@@ -200,3 +233,4 @@ To be completed against the Athma HIS implementation, and the reason [this is st
 - [ADR-0002](../ADR/ADR-0002-read-only-phase1.md) — why only notes and temporary patients are written back
 - [BCP Clinical Notes](../features/BCP-CLINICAL-NOTES.md) — the note record being written back
 - [BCP Temporary Patients](../features/BCP-TEMPORARY-PATIENTS.md) — the temporary patient record being written back
+- `n8n/workflows/05-bcp-reconciliation.json` — the workflow skeleton that consumes this contract
