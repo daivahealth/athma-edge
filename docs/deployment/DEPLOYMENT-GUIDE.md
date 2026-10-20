@@ -4,12 +4,64 @@ Step-by-step instructions for deploying Athma Edge on a hospital edge server run
 
 ## Hardware Requirements
 
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| CPU | 2 cores | 4 cores |
-| RAM | 4 GB | 8 GB |
-| Storage | 50 GB | 100 GB+ (depends on PDF volume) |
-| Network | LAN access to clinical workstations | + access to source HIS API for n8n sync |
+**Size for the outage, not for the quiet day.** On a normal day the edge server does almost nothing — it syncs in the background and a handful of people look at it. During a BCP event it carries the clinical read load of the entire hospital, the load the HIS normally handles. That hour is what the box must survive, so every figure below is a peak-load figure.
+
+All five containers (PostgreSQL, API, UI, n8n, nginx) share one host, and `docker-compose.yml` sets no per-container resource limits, so they compete for whatever the box has.
+
+### By hospital size
+
+| Hospital | Beds | Active patient records on a typical day | Peak concurrent users | CPU | RAM | Storage (year 1) |
+|----------|------|------------------------------------------|----------------------|-----|-----|------------------|
+| Small | ≤ 100 | ~400 | 10–20 | 2 cores | 8 GB | 120 GB |
+| Medium | 101–300 | ~900 | 25–50 | 4 cores | 16 GB | 250 GB |
+| Large | 301–750 | ~2,200 | 60–120 | 8 cores | 32 GB | 600 GB |
+| Very large | > 750 | 4,000+ | 150+ | 16 cores | 64 GB | 1 TB+ |
+
+**Storage must be SSD or NVMe.** PostgreSQL and PDF serving are both random-read workloads; spinning disk will not hold up when a whole ward opens documents at once.
+
+### What actually drives each figure
+
+| Resource | Driven by | Not driven by |
+|----------|-----------|---------------|
+| CPU and RAM | Peak concurrent clinicians reading, which tracks staff on shift | Bed count directly, or database size |
+| Storage | **Synced PDFs**, which dominate everything else | Patient or note records, which are negligible by comparison |
+
+Rough per-record sizes, for your own estimate:
+
+| Data | Size | Behaviour |
+|------|------|-----------|
+| Patient record | ~1 KB | Upserted in place; does not grow with time |
+| Clinical profile | 5–20 KB | Upserted in place; does not grow with time |
+| BCP clinical note | ≤ 5 KB | Created during outages only |
+| Audit log row | ~0.5 KB | **Append-only, never deleted** — grows continuously |
+| Synced PDF | 100 KB – 2 MB, average ~250 KB | **Accumulates** — the dominant cost |
+
+Storage estimate:
+
+```
+new PDFs per day x average PDF size x 365  +  30% headroom
+```
+
+**Worked example, 300 beds:** roughly 800 new documents a day at ~250 KB is 200 MB/day, so about 72 GB in the first year. With the database, audit log, OS and headroom, 250 GB is a sensible provision — and it will need revisiting in year two.
+
+### Two things that make storage grow without bound
+
+Both are gaps, not settings. Plan around them until they are addressed.
+
+- **There is no PDF retention or archival policy.** Documents are synced for active patients and are never removed when those patients go inactive. Disk use only ever rises. [Daily Operations](../runbooks/DAILY-OPERATIONS.md) says to "archive old PDFs if needed", but nothing defines when, what to, or who does it.
+- **The audit log is append-only with no archival.** Every login, search, profile view and download is a row kept forever. At 100 active users this is single-digit GB a year — small beside the PDFs, but it never stops.
+
+Watch `df -h` as part of the daily check, and set an alert at 70% rather than discovering it during an event.
+
+### Network
+
+| Requirement | Why |
+|-------------|-----|
+| LAN reachability from every clinical workstation | Clinicians reach the edge server over the hospital network; it does not depend on the internet |
+| Connectivity from the edge server to the source HIS (Athma CE) | n8n syncs from the HIS. **Open which transport**: the workflow templates use Postgres nodes against the HIS database, while the runbooks describe an HTTP API (`ATHMA_CE_API_URL`). Neither is configured yet — open the ports for whichever is chosen |
+| The edge server must stay reachable when the HIS link is down | This is the whole point. Do not place it behind the same link, router or firewall path whose failure causes the outage |
+
+That last row is a siting decision, not a spec. An edge server that shares a single point of failure with the HIS connection is not a continuity system.
 
 ## Prerequisites
 
@@ -287,8 +339,8 @@ Windows Defender Firewall may block external access. To allow LAN access:
 1. Open `http://<server-ip>:5678` (n8n is bound to localhost — access from the server itself, or set up SSH tunneling)
 2. Login with n8n credentials from `.env`
 3. Import workflow templates from `n8n/workflows/`
-4. Configure source HIS API credentials
-5. Activate all 4 workflows
+4. Configure the source HIS credentials in n8n (database or API — see the note under Network above)
+5. Activate workflows 01-04. Leave 05 (reconciliation) inactive — it is run manually after stand-down
 6. Verify sync on the admin **Sync Status** page
 
 ### Verification Checklist
