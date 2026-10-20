@@ -146,7 +146,9 @@ The edge server is sized for the outage, not the quiet day. On a normal day it i
 | Medium | 200–500 | 16 | 32 GB | 1 TB SSD / flash |
 | Large | 500–1,000+ | 16 | 64 GB | 1 TB SSD / flash |
 
-A Docker-capable host sited inside the hospital. Storage must be SSD or flash — PostgreSQL and PDF serving are both random-read workloads, hit hardest at the moment the hospital depends on them.
+A Docker-capable host sited inside the hospital. **Linux is preferred; Windows is supported.** Storage must be SSD or flash — PostgreSQL and PDF serving are both random-read workloads, hit hardest at the moment the hospital depends on them.
+
+The reason for preferring Linux is unattended restart. A Linux host brings the stack back on boot with nobody logged in; Docker Desktop on Windows starts only at user sign-in, so a server that reboots overnight would stay down until someone signed in — and nobody would find out until the HIS failed. Where Windows is used, an unattended start must be configured and tested.
 
 Two siting rules matter more than the figures:
 
@@ -307,6 +309,7 @@ A continuity system that is only opened during a crisis will not work during a c
 | Audit log review for unusual activity | Weekly | System administrator |
 | PostgreSQL backup verification | Weekly | System administrator |
 | Login test for a sample of clinical users in each area | Monthly | Ward in-charge |
+| Unattended reboot test — restart the server, do not log in, confirm the URL answers from another machine | Quarterly | System administrator |
 | n8n execution history reviewed for recurring failures | Monthly | System administrator |
 | Docker and n8n security patching | Monthly | System administrator |
 | Tabletop drill — walk the activation and reconciliation steps | Quarterly | BCP coordinator |
