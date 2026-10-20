@@ -76,6 +76,24 @@ docker compose logs -f bcp-api --tail=50
 3. Check if cron triggers are configured correctly
 4. Restart n8n: `docker compose restart n8n`
 
+### Scheduled Workflow Runs at the Wrong Time
+
+**Symptom:** A schedule/cron trigger (e.g. a 05:00 job) never fires at the expected hour, but
+n8n logs show no errors and the execution history shows successful runs at some other time.
+
+**Cause:** n8n evaluates cron expressions in its instance timezone (`GENERIC_TIMEZONE`). When
+unset it defaults to `America/New_York`, shifting every trigger by the UTC offset difference.
+The workflow itself is healthy, so nothing is logged as an error.
+
+**Resolution:**
+1. Check the container's effective timezone: `docker compose exec n8n date`
+2. If it is not the site timezone, confirm `GENERIC_TIMEZONE` and `TZ` are set on the `n8n`
+   service in `docker-compose.yml` (and `TZ` in `.env` if overriding the default)
+3. Recreate the container so triggers re-register: `docker compose up -d --force-recreate n8n`
+4. In the n8n UI, open the workflow and confirm the next scheduled execution time is correct
+5. If it is still wrong, check **Workflow settings → Timezone** for a stale per-workflow
+   override, which takes precedence over the instance default
+
 ## Recovery Steps
 
 After resolving the underlying issue:
