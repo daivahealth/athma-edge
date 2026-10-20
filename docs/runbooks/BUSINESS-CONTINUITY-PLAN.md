@@ -46,8 +46,6 @@ Recovery points come from the n8n sync frequencies: active patients every 30–6
 - Outpatients who register after the outage starts are not in the local data and must be registered as temporary patients.
 - Everything written locally has to be returned to the HIS after recovery, by the reconciliation workflow and by hand for the exceptions it leaves.
 
-**Open question:** the hospital has not yet set a formal maximum tolerable downtime for this plan, or a target for how long reconciliation may lag HIS restoration. Both should be agreed and recorded here.
-
 ## Activation criteria
 
 Activation is declared by the IT/HIS on-call lead, or by the senior clinician on duty if IT cannot be reached within 10 minutes. Athma Edge itself needs no switching on — it runs continuously — so "activation" means telling staff to work from it and starting the documentation discipline below.
@@ -244,9 +242,15 @@ The automated run is owned by the BCP coordinator. The exception list it produce
 
 48 hours is chosen so sign-off lands while the clinicians who wrote the notes are still on the same rota and can be asked about an ambiguous entry. A longer deadline makes the exception list harder to resolve, not easier.
 
-**Open questions**
-- The reconciliation workflow in the repository (`n8n/workflows/05-bcp-reconciliation.json`) is a skeleton: its HIS-side writes are not implemented, and it defaults to a dry run. **Until that work is done, reconciliation is manual in practice**, whatever this section describes.
-- The HIS write APIs the workflow depends on are specified in the [HIS Reconciliation Contract](../api/HIS-RECONCILIATION-CONTRACT.md), including the fallback for each capability an HIS cannot provide. That contract is still proposed — it has not been validated against the Athma HIS implementation.
+### Risks and mitigations
+
+| Risk | Impact if it materialises | Mitigation | Owner |
+|------|---------------------------|------------|-------|
+| The reconciliation workflow is a skeleton — its HIS-side writes are not implemented and it defaults to a dry run | No automated write-back. Reconciliation is manual in practice, whatever the procedure above describes | Appendix B's manual steps remain the operative procedure. Staff the manual re-entry on the assumption that no automation exists until it is demonstrated in a drill | IT/HIS on-call lead |
+| The [HIS Reconciliation Contract](../api/HIS-RECONCILIATION-CONTRACT.md) has not been validated against the Athma HIS. Whether Athma accepts a **backdated authored timestamp** is the largest unknown | A shift's documentation lands in the chart as a block of notes all authored at the moment of reconciliation, destroying the provenance that made the notes worth keeping | Verify before the first automated run. If unsupported, use the contract's degraded mode: the true time and author prefixed into the note text, and the loss recorded in the post-event review | IT/HIS on-call lead |
+| The sign-off owner and deadline are a proposal, not approved by clinical and HIM leadership | Reconciliation has no defined end. The exception list is worked partially and nothing forces closure | The proposed default (HIM lead, 48 hours) stands in the interim and is used in drills. Confirm at the next BCP review | BCP coordinator |
+| No maximum tolerable downtime has been agreed for this plan, nor a target for how long reconciliation may lag restoration | No trigger for escalating beyond this plan when an outage runs long | Treat the hospital's wider emergency plan as the escalation path until a figure is agreed. Review after the first real activation, when a realistic figure is observable | BCP coordinator |
+| An outage spans a daily rollover | Outpatient, daycare and emergency records from the previous day drop out of the default search mid-event | Staff are briefed to search with the business-date filter and `activeOnly` off. Inpatients are unaffected | Ward in-charge |
 
 ## Security, access and audit
 
