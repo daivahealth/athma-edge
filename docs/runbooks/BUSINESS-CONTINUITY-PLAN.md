@@ -270,8 +270,6 @@ The audit log is the evidence base for post-event review and for any clinical or
 
 Patient data and PDF documents live on the hospital edge server, not in the cloud. The edge server must be physically secured, access to the Docker host restricted to the system administrator, and the server included in the hospital's normal patching and backup regime.
 
-**Open question:** the edge server's backup and encryption-at-rest arrangements are not described in the system documentation and should be confirmed against hospital information-security policy.
-
 ## Testing, drills and maintenance
 
 A continuity system that is only opened during a crisis will not work during a crisis. The readiness checks below come from [Daily Operations](DAILY-OPERATIONS.md); the drill and review cadence is a plan commitment.
