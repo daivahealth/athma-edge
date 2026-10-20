@@ -24,6 +24,7 @@ Documentation entrypoint for the Athma Edge BCP (Business Continuity Plan) appli
 - [Document API](api/DOCUMENT-API.md) — PDF list, download
 - [Admin API](api/ADMIN-API.md) — users, sync status, audit
 - [Response Formats](api/API-RESPONSE-FORMATS.md) — standard envelopes and errors
+- [HIS Reconciliation Contract](api/HIS-RECONCILIATION-CONTRACT.md) — outbound write-back: the API surface a source HIS must provide, and the reconciliation guidelines
 
 ### Features
 - [Features Overview](features/README.md)

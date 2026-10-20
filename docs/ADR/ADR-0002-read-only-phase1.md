@@ -56,4 +56,4 @@ The original decision assumed reconciliation would be entirely human. It is not.
 - A note is never promoted to an executable order by the workflow. It is written back as documentation; the responsible clinician enters any real order.
 - Nothing about the edge side changes: synced clinical data stays read-only, notes stay append-only, temp patients are still never deleted, and the edge keeps its records after write-back.
 
-The workflow's own export is not yet in `n8n/workflows/`, which currently holds the four inbound sync workflows only. See [Business Continuity Plan](../runbooks/BUSINESS-CONTINUITY-PLAN.md) for when it runs and who owns its output.
+The API surface the workflow requires from the HIS is specified in the [HIS Reconciliation Contract](../api/HIS-RECONCILIATION-CONTRACT.md). The workflow's own export is not yet in `n8n/workflows/`, which currently holds the four inbound sync workflows only. See [Business Continuity Plan](../runbooks/BUSINESS-CONTINUITY-PLAN.md) for when it runs and who owns its output.

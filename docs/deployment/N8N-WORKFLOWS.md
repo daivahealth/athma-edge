@@ -80,6 +80,8 @@ Rules:
 - Identity merges are out of scope. A walk-in who already exists in the HIS is returned as an exception for Medical Records to merge by hand.
 - The edge records are not modified or deleted by the run. Notes stay append-only and temp patients are never deleted.
 
+The HIS-side API surface this workflow depends on, and what it does when a capability is missing, is specified in the [HIS Reconciliation Contract](../api/HIS-RECONCILIATION-CONTRACT.md).
+
 The workflow export is not yet checked into `n8n/workflows/`, which holds the four inbound sync workflows only.
 
 ## Timezone (required for cron/schedule triggers)

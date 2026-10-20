@@ -42,3 +42,4 @@ Obtain a token via `POST /api/auth/login`.
 - [Document API](DOCUMENT-API.md) — PDF list, download
 - [Admin API](ADMIN-API.md) — users, sync status, audit
 - [Response Formats](API-RESPONSE-FORMATS.md) — standard envelopes and errors
+- [HIS Reconciliation Contract](HIS-RECONCILIATION-CONTRACT.md) — outbound: what the source HIS must expose for write-back after a BCP event

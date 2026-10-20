@@ -233,7 +233,7 @@ The automated run is owned by the BCP coordinator. The exception list it produce
 
 - Who signs off that reconciliation is complete, and within how many hours of stand-down?
 - The reconciliation workflow is not in this repository — `n8n/workflows/` holds only the four inbound sync workflows. It needs exporting there. Its behaviour is documented in [n8n Workflows](../deployment/N8N-WORKFLOWS.md) and [ADR-0002](../ADR/ADR-0002-read-only-phase1.md).
-- Which HIS write APIs the workflow depends on, and what it does when one is unavailable, should be recorded so a different HIS deployment knows what it must provide.
+- The HIS write APIs the workflow depends on are specified in the [HIS Reconciliation Contract](../api/HIS-RECONCILIATION-CONTRACT.md), including the fallback for each capability an HIS cannot provide. That contract is still proposed — it has not been validated against the Athma HIS implementation.
 
 ## Security, access and audit
 
