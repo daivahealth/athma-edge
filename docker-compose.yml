@@ -12,7 +12,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-bcpuser} -d ${POSTGRES_DB:-athma_edge}']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-bcpuser}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,11 +50,6 @@ services:
 
   n8n:
     image: n8nio/n8n:latest
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "5"
     restart: unless-stopped
     environment:
       DB_TYPE: postgresdb
@@ -66,15 +61,14 @@ services:
       N8N_BASIC_AUTH_ACTIVE: 'true'
       N8N_BASIC_AUTH_USER: ${N8N_USER:-admin}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD:?N8N_PASSWORD must be set}
-      N8N_RESTRICT_FILE_ACCESS_TO: /data/pdfs
-      NODE_FUNCTION_ALLOW_BUILTIN: fs,path
-      GENERIC_TIMEZONE: Asia/Kolkata
-      N8N_DIAGNOSTICS_ENABLED: 'false'
+      # Schedule/cron triggers fire in GENERIC_TIMEZONE. n8n defaults to
+      # America/New_York, which silently shifts every cron by hours.
+      GENERIC_TIMEZONE: ${TZ:-Asia/Kolkata}
+      TZ: ${TZ:-Asia/Kolkata}
     ports:
       - '127.0.0.1:5678:5678'
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./local-bcp-storage/pdfs:/data/pdfs
     depends_on:
       postgres:
         condition: service_healthy

@@ -25,7 +25,7 @@ Athma Edge is a **Phase-1 Hospital BCP (Business Continuity Plan) Edge Applicati
 - A disaster recovery (DR) system
 - A full EMR/HIS replacement
 - A system with structured order entry, medication prescribing, or billing — clinical notes are free-text documentation, not structured orders
-- A reconciliation engine — local notes and temp patients require manual reconciliation when the HIS recovers
+- A real-time two-way sync — write-back to the HIS happens after recovery, through a separate n8n reconciliation workflow, not continuously
 
 ## Purpose
 
@@ -139,7 +139,7 @@ These rules are unique to the BCP edge application and must not be violated.
 
 - **Synced clinical data is read-only.** Do not add write endpoints or UI forms that modify synced clinical tables (vitals, medications, investigations, documents). These come from n8n sync only.
 - **Two local-write exceptions exist:** BCP Clinical Notes (append-only, free-text) and BCP Temporary Patient Registration (walk-in patients with `BCP-` prefixed MRNs). Both are append-only — notes cannot be edited or deleted; temp patient demographics can be updated but not deleted.
-- **No structured order entry, medication prescribing, or billing.** Clinical notes are free-text documentation for manual reconciliation, not executable orders.
+- **No structured order entry, medication prescribing, or billing.** Clinical notes are free-text documentation written back to the HIS as documentation, never promoted to executable orders.
 - **Always show sync freshness.** Every patient-facing view must display `last_synced_at`. If stale (>5 minutes), show a warning banner.
 - **Always show BCP LOCAL MODE.** The UI must permanently display a non-dismissible banner indicating this is the BCP local system, not the primary HIS.
 - **External IDs are VARCHAR, not UUID.** All IDs from the source HIS (patient_id, mrn, uhid, encounter_id, visit_number, consultant_id, tenant_id, source_system) must be VARCHAR. Do not generate UUIDs for these.

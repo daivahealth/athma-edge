@@ -4,12 +4,87 @@ Step-by-step instructions for deploying Athma Edge on a hospital edge server run
 
 ## Hardware Requirements
 
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| CPU | 2 cores | 4 cores |
-| RAM | 4 GB | 8 GB |
-| Storage | 50 GB | 100 GB+ (depends on PDF volume) |
-| Network | LAN access to clinical workstations | + access to source HIS API for n8n sync |
+**Size for the outage, not for the quiet day.** On a normal day the edge server does almost nothing — it syncs in the background and a handful of people look at it. During a BCP event it carries the clinical read load of the entire hospital, the load the HIS normally handles. That hour is what the box must survive, so every figure below is a peak-load figure.
+
+All five containers (PostgreSQL, API, UI, n8n, nginx) share one host, and `docker-compose.yml` sets no per-container resource limits, so they compete for whatever the box has.
+
+### By hospital size
+
+| Hospital | Beds | Active patient records on a typical day | Peak concurrent users | vCPU | RAM | Storage |
+|----------|------|------------------------------------------|----------------------|------|-----|---------|
+| Small | < 200 | ~600 | 20–40 | 8 | 16 GB | 1 TB SSD / flash |
+| Medium | 200–500 | ~1,500 | 40–90 | 16 | 32 GB | 1 TB SSD / flash |
+| Large | 500–1,000+ | 3,000+ | 120+ | 16 | 64 GB | 1 TB SSD / flash |
+
+A Docker-capable host, physically sited in the hospital. **Storage must be SSD or flash, never spinning disk** — PostgreSQL and PDF serving are both random-read workloads, and they are hit hardest at exactly the moment the hospital is relying on them.
+
+1 TB across all three tiers is deliberate: it keeps procurement simple, and with no PDF retention policy in place (below) the smaller sites catch up with the larger ones eventually anyway.
+
+### Operating system
+
+**Linux is preferred.** Windows is supported and fully documented below. The hardware figures are the same either way.
+
+| | Linux | Windows |
+|---|---|---|
+| Versions | Ubuntu 22.04 LTS, Debian 12, or an RHEL-family equivalent | Windows Server 2019/2022, or Windows 10/11 Pro |
+| Runtime | Docker Engine 24+ with Compose v2 | Docker Desktop 4.25+ with the WSL 2 backend |
+| Starts without anyone logged in | Yes, via systemd | **Not by default** — see below |
+| Effective RAM | As provisioned | WSL 2 takes its own share; add headroom or cap it in `.wslconfig` |
+
+**The deciding reason is unattended restart.** A Linux host brings the whole stack back on boot through systemd, with nobody logged in. Docker Desktop on Windows starts at *user sign-in* — so a server that reboots overnight stays down until someone signs in, and nobody finds out until the HIS fails and staff turn to a system that is not running. Being there unattended is the one thing a continuity system cannot get wrong.
+
+Linux also avoids the WSL 2 layer between the containers and the disk, and the Docker Desktop licensing question.
+
+Choose Windows when the hospital's IT can only support Windows — a legitimate reason — and then handle these two things:
+
+- **Docker Desktop auto-start is tied to user sign-in.** If the server reboots overnight and nobody logs in, Athma Edge does not come back up, and nobody finds out until the HIS fails. Run Docker Desktop as a service, or configure the host to log in automatically and lock, or set a scheduled task at startup. Whichever you pick, **test it: reboot the server and confirm the stack returns with no one signed in.**
+- **Docker Desktop licensing.** It requires a paid subscription for commercial use in larger organisations. Most hospitals meet that threshold. Confirm before standardising on it, or use Linux.
+
+### What actually drives each figure
+
+| Resource | Driven by | Not driven by |
+|----------|-----------|---------------|
+| CPU and RAM | Peak concurrent clinicians reading, which tracks staff on shift | Bed count directly, or database size |
+| Storage | **Synced PDFs**, which dominate everything else | Patient or note records, which are negligible by comparison |
+
+Rough per-record sizes, for your own estimate:
+
+| Data | Size | Behaviour |
+|------|------|-----------|
+| Patient record | ~1 KB | Upserted in place; does not grow with time |
+| Clinical profile | 5–20 KB | Upserted in place; does not grow with time |
+| BCP clinical note | ≤ 5 KB | Created during outages only |
+| Audit log row | ~0.5 KB | **Append-only, never deleted** — grows continuously |
+| Synced PDF | 100 KB – 2 MB, average ~250 KB | **Accumulates** — the dominant cost |
+
+Forecasting when 1 TB runs out:
+
+```
+new PDFs per day x average PDF size x 365  =  growth per year
+```
+
+**Worked example, 400 beds:** roughly 1,000 new documents a day at ~250 KB is 250 MB/day, about 90 GB a year. Against 1 TB that is comfortable for several years — but it is a straight line with nothing bending it down, so the question is when, not whether. A 1,000-bed site at ~600 MB/day reaches 1 TB in about four years.
+
+Measure your own rate after the first month rather than trusting this figure: `du -sh` on the PDF volume, twice, a week apart.
+
+### Two things that make storage grow without bound
+
+Both are gaps, not settings. Plan around them until they are addressed.
+
+- **There is no PDF retention or archival policy.** Documents are synced for active patients and are never removed when those patients go inactive. Disk use only ever rises. [Daily Operations](../runbooks/DAILY-OPERATIONS.md) says to "archive old PDFs if needed", but nothing defines when, what to, or who does it.
+- **The audit log is append-only with no archival.** Every login, search, profile view and download is a row kept forever. At 100 active users this is single-digit GB a year — small beside the PDFs, but it never stops.
+
+Watch `df -h` as part of the daily check, and set an alert at 70% rather than discovering it during an event. 1 TB buys years, not permanence.
+
+### Network
+
+| Requirement | Why |
+|-------------|-----|
+| LAN reachability from every clinical workstation | Clinicians reach the edge server over the hospital network; it does not depend on the internet |
+| Connectivity from the edge server to the source HIS (Athma CE) | n8n syncs from the HIS. **Open which transport**: the workflow templates use Postgres nodes against the HIS database, while the runbooks describe an HTTP API (`ATHMA_CE_API_URL`). Neither is configured yet — open the ports for whichever is chosen |
+| The edge server must stay reachable when the HIS link is down | This is the whole point. Do not place it behind the same link, router or firewall path whose failure causes the outage |
+
+That last row is a siting decision, not a spec. An edge server that shares a single point of failure with the HIS connection is not a continuity system.
 
 ## Prerequisites
 
@@ -253,6 +328,12 @@ Open `http://localhost` in a browser to access the BCP UI.
 2. Enable **Start Docker Desktop when you sign in**
 3. Docker Compose services will restart automatically (configured with `restart: unless-stopped`)
 
+> **This is not sufficient on its own.** "When you sign in" means exactly that: after an unattended reboot, with no one logged in, Docker Desktop does not start and neither does Athma Edge. For a continuity system that is the failure that matters — the box is down and nobody knows until the HIS goes out.
+>
+> Pick one and verify it: run Docker Desktop as a Windows service, enable automatic sign-in for a dedicated local account with a locked screen, or create a Task Scheduler task triggered **At startup** rather than at logon.
+>
+> **Then test it properly: reboot the server, do not log in, and confirm from another machine that the Athma Edge URL answers.** Add this to the quarterly drill.
+
 ### 8. Firewall
 
 Windows Defender Firewall may block external access. To allow LAN access:
@@ -287,8 +368,8 @@ Windows Defender Firewall may block external access. To allow LAN access:
 1. Open `http://<server-ip>:5678` (n8n is bound to localhost — access from the server itself, or set up SSH tunneling)
 2. Login with n8n credentials from `.env`
 3. Import workflow templates from `n8n/workflows/`
-4. Configure source HIS API credentials
-5. Activate all 4 workflows
+4. Configure the source HIS credentials in n8n (database or API — see the note under Network above)
+5. Activate workflows 01-04. Leave 05 (reconciliation) inactive — it is run manually after stand-down
 6. Verify sync on the admin **Sync Status** page
 
 ### Verification Checklist
