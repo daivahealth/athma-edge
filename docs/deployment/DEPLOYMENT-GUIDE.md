@@ -20,6 +20,26 @@ A Docker-capable host, physically sited in the hospital. **Storage must be SSD o
 
 1 TB across all three tiers is deliberate: it keeps procurement simple, and with no PDF retention policy in place (below) the smaller sites catch up with the larger ones eventually anyway.
 
+### Operating system
+
+**Linux is preferred.** Windows is supported and fully documented below. The hardware figures are the same either way.
+
+| | Linux | Windows |
+|---|---|---|
+| Versions | Ubuntu 22.04 LTS, Debian 12, or an RHEL-family equivalent | Windows Server 2019/2022, or Windows 10/11 Pro |
+| Runtime | Docker Engine 24+ with Compose v2 | Docker Desktop 4.25+ with the WSL 2 backend |
+| Starts without anyone logged in | Yes, via systemd | **Not by default** — see below |
+| Effective RAM | As provisioned | WSL 2 takes its own share; add headroom or cap it in `.wslconfig` |
+
+**The deciding reason is unattended restart.** A Linux host brings the whole stack back on boot through systemd, with nobody logged in. Docker Desktop on Windows starts at *user sign-in* — so a server that reboots overnight stays down until someone signs in, and nobody finds out until the HIS fails and staff turn to a system that is not running. Being there unattended is the one thing a continuity system cannot get wrong.
+
+Linux also avoids the WSL 2 layer between the containers and the disk, and the Docker Desktop licensing question.
+
+Choose Windows when the hospital's IT can only support Windows — a legitimate reason — and then handle these two things:
+
+- **Docker Desktop auto-start is tied to user sign-in.** If the server reboots overnight and nobody logs in, Athma Edge does not come back up, and nobody finds out until the HIS fails. Run Docker Desktop as a service, or configure the host to log in automatically and lock, or set a scheduled task at startup. Whichever you pick, **test it: reboot the server and confirm the stack returns with no one signed in.**
+- **Docker Desktop licensing.** It requires a paid subscription for commercial use in larger organisations. Most hospitals meet that threshold. Confirm before standardising on it, or use Linux.
+
 ### What actually drives each figure
 
 | Resource | Driven by | Not driven by |
@@ -307,6 +327,12 @@ Open `http://localhost` in a browser to access the BCP UI.
 1. Open Docker Desktop **Settings** > **General**
 2. Enable **Start Docker Desktop when you sign in**
 3. Docker Compose services will restart automatically (configured with `restart: unless-stopped`)
+
+> **This is not sufficient on its own.** "When you sign in" means exactly that: after an unattended reboot, with no one logged in, Docker Desktop does not start and neither does Athma Edge. For a continuity system that is the failure that matters — the box is down and nobody knows until the HIS goes out.
+>
+> Pick one and verify it: run Docker Desktop as a Windows service, enable automatic sign-in for a dedicated local account with a locked screen, or create a Task Scheduler task triggered **At startup** rather than at logon.
+>
+> **Then test it properly: reboot the server, do not log in, and confirm from another machine that the Athma Edge URL answers.** Add this to the quarterly drill.
 
 ### 8. Firewall
 
