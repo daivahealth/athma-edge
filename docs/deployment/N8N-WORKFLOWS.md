@@ -9,7 +9,7 @@ Sync workflow design for the Athma Edge BCP application. n8n is the sole mechani
 | 1 | Active Patient Sync | 30-60 seconds | bcp_active_patient |
 | 2 | Clinical Profile Sync | 1-2 minutes | bcp_patient_clinical_profile |
 | 3 | PDF Document Sync | 5-10 minutes | bcp_patient_pdf_document |
-| 4 | Sync Status Heartbeat | 1 minute | bcp_sync_status |
+| 4 | Daily Rollover | Daily, 00:00 | bcp_active_patient |
 | 5 | BCP Reconciliation (write-back) | Manual, after stand-down | Source HIS (outbound) |
 
 ## Workflow 1: Active Patient Sync
@@ -51,14 +51,19 @@ Sync workflow design for the Athma Edge BCP application. n8n is the sole mechani
 7. **Postgres** — Upsert metadata into `bcp_patient_pdf_document`
 8. **Postgres** — Update `bcp_sync_status` for PDF_DOCUMENT
 
-## Workflow 4: Sync Status Heartbeat
+## Workflow 4: Daily Rollover
 
-**Trigger:** Cron (every 1 minute)
+**Export:** `04-daily-rollover.json`
+
+**Trigger:** Cron (`0 0 * * *`)
 
 **Steps:**
-1. **Postgres** — Update `bcp_sync_status` set `last_attempt_at=now()` for all components
-2. **Function** — Check if any component's `last_successful_sync_at` is stale
-3. **Postgres** — Mark stale components as status=FAILED with error_message
+1. **Postgres** — Mark OUTPATIENT, DAYCARE and EMERGENCY records from previous business dates as `is_active = false`, setting `active_until`
+2. **Postgres** — Roll `business_date` forward for still-active INPATIENT records
+
+INPATIENT records are never deactivated here; they stay active until the source HIS records a discharge. See [Daily Rollover](../features/DAILY-ROLLOVER.md).
+
+> A **Sync Status Heartbeat** workflow was previously described in this position — a 1-minute job that stamped `last_attempt_at` and flipped stale components to FAILED. No such workflow has ever been exported to `n8n/workflows/`. Nothing currently marks a component stale when its sync stops running: `bcp_sync_status` only advances when a sync succeeds, so a dead workflow leaves the last success timestamp frozen rather than raising FAILED. The UI's staleness check is what surfaces it.
 
 ## Workflow 5: BCP Reconciliation (write-back)
 
@@ -82,7 +87,13 @@ Rules:
 
 The HIS-side API surface this workflow depends on, and what it does when a capability is missing, is specified in the [HIS Reconciliation Contract](../api/HIS-RECONCILIATION-CONTRACT.md).
 
-The workflow export is not yet checked into `n8n/workflows/`, which holds the four inbound sync workflows only.
+The export is `n8n/workflows/05-bcp-reconciliation.json`. Like workflows 01–03 it is a **template**: the BCP-side reads are real, the HIS-side writes are `TODO` placeholders pending the [Athma-specific mapping](../api/HIS-RECONCILIATION-CONTRACT.md#athma-specific-mapping).
+
+It is deliberately safe to import before that work is done:
+
+- `dryRun` defaults to **true**
+- the readiness guard throws unless a real HIS check is implemented, so an unimplemented workflow cannot write
+- an absent or inverted outage window throws rather than defaulting to "everything"
 
 ## Timezone (required for cron/schedule triggers)
 

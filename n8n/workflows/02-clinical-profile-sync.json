@@ -57,7 +57,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE bcp_sync_status SET\n  sync_status = 'SUCCESS',\n  last_sync_completed_at = NOW(),\n  last_success_at = NOW(),\n  records_synced = {{ $items().length }},\n  error_message = NULL\nWHERE sync_component = 'CLINICAL_PROFILE'\n  AND tenant_id = '{{ $env.DEFAULT_TENANT_ID }}';",
+        "query": "-- Column names must match bcp_sync_status in backend/prisma/schema.prisma.\n-- The row is created by the seed (backend/prisma/seed.ts) for each of the\n-- three sync components, so a plain UPDATE is sufficient.\n--\n-- records_failed is 0 because this node is only reached on the success\n-- path: the workflow has no per-record failure tracking, so it never\n-- reports PARTIAL. Adding that means counting rejected rows upstream\n-- and branching here.\nUPDATE bcp_sync_status SET\n  sync_status = 'SUCCESS',\n  last_successful_sync_at = NOW(),\n  last_attempt_at = NOW(),\n  records_processed = {{ $items().length }},\n  records_failed = 0,\n  error_message = NULL\nWHERE sync_component = 'CLINICAL_PROFILE'\n  AND tenant_id = '{{ $env.DEFAULT_TENANT_ID }}';",
         "additionalFields": {}
       },
       "name": "Update Sync Status",
