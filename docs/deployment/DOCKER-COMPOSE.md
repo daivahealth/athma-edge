@@ -55,6 +55,10 @@ See `.env.example` at the project root. Key variables:
 - `JWT_SECRET`, `JWT_EXPIRY`, `FRONTEND_ORIGIN`, `ADMIN_BOOTSTRAP_PASSWORD`
 - `PDF_STORAGE_PATH`
 - `N8N_BASIC_AUTH_USER`, `N8N_BASIC_AUTH_PASSWORD`
+- `TZ` — site timezone, defaults to `Asia/Kolkata`. Drives the n8n container clock and
+  `GENERIC_TIMEZONE`, which is what n8n cron/schedule triggers are evaluated against.
+  See [N8N-WORKFLOWS.md](N8N-WORKFLOWS.md) — leaving it unset makes every scheduled
+  sync fire at the wrong local time with no error in the logs.
 
 Security notes:
 

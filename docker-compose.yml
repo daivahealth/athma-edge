@@ -61,6 +61,10 @@ services:
       N8N_BASIC_AUTH_ACTIVE: 'true'
       N8N_BASIC_AUTH_USER: ${N8N_USER:-admin}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD:?N8N_PASSWORD must be set}
+      # Schedule/cron triggers fire in GENERIC_TIMEZONE. n8n defaults to
+      # America/New_York, which silently shifts every cron by hours.
+      GENERIC_TIMEZONE: ${TZ:-Asia/Kolkata}
+      TZ: ${TZ:-Asia/Kolkata}
     ports:
       - '127.0.0.1:5678:5678'
     volumes:
