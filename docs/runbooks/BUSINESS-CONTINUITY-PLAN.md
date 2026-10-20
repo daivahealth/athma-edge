@@ -229,10 +229,23 @@ The automated run is owned by the BCP coordinator. The exception list it produce
 - Nothing is reconciled until it is confirmed present in the HIS. Treat the workflow's own success count as a claim to verify, not proof.
 - Athma Edge keeps running as a backup after recovery. It is not switched off, and the notes stay in it permanently.
 
-**Open questions**
+### Sign-off
 
-- Who signs off that reconciliation is complete, and within how many hours of stand-down?
-- The reconciliation workflow is not in this repository — `n8n/workflows/` holds only the four inbound sync workflows. It needs exporting there. Its behaviour is documented in [n8n Workflows](../deployment/N8N-WORKFLOWS.md) and [ADR-0002](../ADR/ADR-0002-read-only-phase1.md).
+> **Proposed, pending approval by clinical and HIM leadership.** The roles and the deadline below are a recommended default, not an agreed hospital policy. Confirm or change them before this plan is approved.
+
+| Question | Proposed |
+|----------|----------|
+| Who signs off that reconciliation is complete | The Medical Records / HIM lead |
+| By when | Within **48 hours** of stand-down |
+| Evidence it is given against | The reconciliation run record, plus each ward in-charge's area sign-off |
+| Partial sign-off | Permitted, with a documented residual list, accepted by the nursing superintendent on duty |
+| Where it is recorded | The outage log opened at activation |
+| If the deadline passes with work outstanding | Escalate to the hospital emergency operations lead, who sets a new date and records why |
+
+48 hours is chosen so sign-off lands while the clinicians who wrote the notes are still on the same rota and can be asked about an ambiguous entry. A longer deadline makes the exception list harder to resolve, not easier.
+
+**Open questions**
+- The reconciliation workflow in the repository (`n8n/workflows/05-bcp-reconciliation.json`) is a skeleton: its HIS-side writes are not implemented, and it defaults to a dry run. **Until that work is done, reconciliation is manual in practice**, whatever this section describes.
 - The HIS write APIs the workflow depends on are specified in the [HIS Reconciliation Contract](../api/HIS-RECONCILIATION-CONTRACT.md), including the fallback for each capability an HIS cannot provide. That contract is still proposed — it has not been validated against the Athma HIS implementation.
 
 ## Security, access and audit
@@ -308,6 +321,8 @@ A continuity system that is only opened during a crisis will not work during a c
 - [ ] Reconcile medication administration against the paper MAR
 - [ ] Raise incident-type notes through the normal incident system
 - [ ] Each ward in-charge signs off their area
+- [ ] Medical Records / HIM lead signs off reconciliation complete, within 48 hours of stand-down, against the run record
+- [ ] Record the sign-off, or the documented residual list, in the outage log
 - [ ] Schedule the post-event review within two weeks
 
 ## Appendix C — Contacts
@@ -320,7 +335,7 @@ To be completed and kept current by the BCP coordinator. Print and hold a copy i
 | System administrator (Athma Edge) | | | |
 | HIS vendor / cloud support | | | |
 | Network / infrastructure on-call | | | |
-| Medical records / HIM lead | | | |
+| Medical records / HIM lead *(signs off reconciliation)* | | | |
 | Nursing superintendent on duty | | | |
 | Hospital emergency operations lead | | | |
 
