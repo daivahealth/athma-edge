@@ -10,14 +10,15 @@ All five containers (PostgreSQL, API, UI, n8n, nginx) share one host, and `docke
 
 ### By hospital size
 
-| Hospital | Beds | Active patient records on a typical day | Peak concurrent users | CPU | RAM | Storage (year 1) |
-|----------|------|------------------------------------------|----------------------|-----|-----|------------------|
-| Small | ≤ 100 | ~400 | 10–20 | 2 cores | 8 GB | 120 GB |
-| Medium | 101–300 | ~900 | 25–50 | 4 cores | 16 GB | 250 GB |
-| Large | 301–750 | ~2,200 | 60–120 | 8 cores | 32 GB | 600 GB |
-| Very large | > 750 | 4,000+ | 150+ | 16 cores | 64 GB | 1 TB+ |
+| Hospital | Beds | Active patient records on a typical day | Peak concurrent users | vCPU | RAM | Storage |
+|----------|------|------------------------------------------|----------------------|------|-----|---------|
+| Small | < 200 | ~600 | 20–40 | 8 | 16 GB | 1 TB SSD / flash |
+| Medium | 200–500 | ~1,500 | 40–90 | 16 | 32 GB | 1 TB SSD / flash |
+| Large | 500–1,000+ | 3,000+ | 120+ | 16 | 64 GB | 1 TB SSD / flash |
 
-**Storage must be SSD or NVMe.** PostgreSQL and PDF serving are both random-read workloads; spinning disk will not hold up when a whole ward opens documents at once.
+A Docker-capable host, physically sited in the hospital. **Storage must be SSD or flash, never spinning disk** — PostgreSQL and PDF serving are both random-read workloads, and they are hit hardest at exactly the moment the hospital is relying on them.
+
+1 TB across all three tiers is deliberate: it keeps procurement simple, and with no PDF retention policy in place (below) the smaller sites catch up with the larger ones eventually anyway.
 
 ### What actually drives each figure
 
@@ -36,13 +37,15 @@ Rough per-record sizes, for your own estimate:
 | Audit log row | ~0.5 KB | **Append-only, never deleted** — grows continuously |
 | Synced PDF | 100 KB – 2 MB, average ~250 KB | **Accumulates** — the dominant cost |
 
-Storage estimate:
+Forecasting when 1 TB runs out:
 
 ```
-new PDFs per day x average PDF size x 365  +  30% headroom
+new PDFs per day x average PDF size x 365  =  growth per year
 ```
 
-**Worked example, 300 beds:** roughly 800 new documents a day at ~250 KB is 200 MB/day, so about 72 GB in the first year. With the database, audit log, OS and headroom, 250 GB is a sensible provision — and it will need revisiting in year two.
+**Worked example, 400 beds:** roughly 1,000 new documents a day at ~250 KB is 250 MB/day, about 90 GB a year. Against 1 TB that is comfortable for several years — but it is a straight line with nothing bending it down, so the question is when, not whether. A 1,000-bed site at ~600 MB/day reaches 1 TB in about four years.
+
+Measure your own rate after the first month rather than trusting this figure: `du -sh` on the PDF volume, twice, a week apart.
 
 ### Two things that make storage grow without bound
 
@@ -51,7 +54,7 @@ Both are gaps, not settings. Plan around them until they are addressed.
 - **There is no PDF retention or archival policy.** Documents are synced for active patients and are never removed when those patients go inactive. Disk use only ever rises. [Daily Operations](../runbooks/DAILY-OPERATIONS.md) says to "archive old PDFs if needed", but nothing defines when, what to, or who does it.
 - **The audit log is append-only with no archival.** Every login, search, profile view and download is a row kept forever. At 100 active users this is single-digit GB a year — small beside the PDFs, but it never stops.
 
-Watch `df -h` as part of the daily check, and set an alert at 70% rather than discovering it during an event.
+Watch `df -h` as part of the daily check, and set an alert at 70% rather than discovering it during an event. 1 TB buys years, not permanence.
 
 ### Network
 

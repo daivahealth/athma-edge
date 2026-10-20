@@ -4,7 +4,7 @@ First-time deployment checklist for the Athma Edge BCP application.
 
 ## Prerequisites
 
-- Server sized for the hospital — see [Hardware Requirements](../deployment/DEPLOYMENT-GUIDE.md#hardware-requirements) for figures by bed count. 8 GB RAM and 120 GB SSD is the floor, for a hospital under 100 beds
+- Server sized for the hospital — see [Hardware Requirements](../deployment/DEPLOYMENT-GUIDE.md#hardware-requirements) for figures by bed count. 8 vCPU, 16 GB RAM and a 1 TB SSD is the floor, for a hospital under 200 beds
 - Docker Engine 24+
 - Docker Compose v2
 - Network access from the edge server to the source HIS (for n8n sync) — see [Network](../deployment/DEPLOYMENT-GUIDE.md#network), the transport is not yet settled
