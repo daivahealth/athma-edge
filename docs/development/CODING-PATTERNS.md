@@ -82,6 +82,20 @@ Put it in the `MainLayout` children array unless it is genuinely public.
 ### Component Organization
 
 - `components/ui/` — Radix UI primitives wrapped with CVA + `cn()` utility
+
+### Theming
+
+Tailwind 4, configured in CSS rather than a JS config. `src/globals.css` holds
+the design tokens in `:root` (and `.dark`), and an `@theme inline` block maps
+them to utilities, so `--primary` becomes `bg-primary`, `text-primary` and so on.
+
+The tokens are ported from the prr-app design system, so the two products read
+as one family. **Change a colour there, not in a component.** A hard-coded hex
+in a component is the thing that makes a theme stop being a theme.
+
+The sidebar is the shadcn collapsible sidebar ported from prr-app onto Radix:
+cookie-persisted collapse, ⌘/Ctrl+B, an icon rail with tooltips, and a drawer
+below `md`.
 - `components/layout/` — App shell components (sidebar, topbar, BCP banner)
 - `components/patients/` — Patient-specific components
 - `components/admin/` — Admin page components
