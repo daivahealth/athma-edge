@@ -2,6 +2,53 @@
 
 Local clinical continuity layer for hospitals. When the main cloud HIS/EMR becomes unreachable, clinical staff use Athma Edge to access active patient data, record clinical notes, and register walk-in patients.
 
+## How It Works
+
+```mermaid
+flowchart TB
+    HIS["Main hospital system (cloud)<br/>where patient records really live"]
+
+    subgraph EDGE["Athma Edge — a small server inside the hospital"]
+        direction LR
+        COPY["An up-to-date copy<br/>today's patients, allergies,<br/>diagnosis, medicines, latest results"]
+        DOCS["Their documents<br/>lab and scan reports,<br/>discharge summaries"]
+        APP["The Athma Edge screen<br/>search a patient, read their details,<br/>write notes, register a walk-in"]
+        COPY --> APP
+        DOCS --> APP
+    end
+
+    STAFF["Doctors and nurses<br/>on any hospital computer"]
+
+    HIS -->|"copied down every few minutes<br/>— the only thing an outage breaks"| EDGE
+    APP --> STAFF
+
+    classDef cloud fill:#fce7f3,stroke:#be185d,stroke-width:2px,color:#111
+    classDef local fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#111
+    classDef app fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#111
+    classDef people fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#111
+    class HIS cloud
+    class COPY,DOCS local
+    class APP app
+    class STAFF people
+    linkStyle 2 stroke:#dc2626,stroke-width:3px,color:#dc2626
+```
+
+**In one sentence:** Athma Edge quietly keeps a copy of today's patients on a server inside the hospital, so that when the cloud system goes down, staff can still look patients up and write things down.
+
+Only the red arrow breaks during an outage. Everything inside the box sits on the hospital's own network and keeps running.
+
+### What staff can and cannot do during an outage
+
+| They can | They cannot |
+|----------|-------------|
+| Look up any patient who was active before the outage | Find a patient who was never synced |
+| Read allergies, diagnosis, medicines, recent results | See anything that happened after the link went down |
+| Open lab reports, scans and discharge summaries | Get results issued during the outage |
+| Write clinical notes — orders given, assessments, handover | Place a real order; a note is a record, not an instruction to the pharmacy or lab |
+| Register a walk-in patient who isn't in the system | Delete anything, or edit a note once saved |
+
+Everything written during an outage goes back into the main system afterwards. See the [Business Continuity Plan](docs/runbooks/BUSINESS-CONTINUITY-PLAN.md) for how that works and who is responsible.
+
 ## What This IS
 
 - Local cache of active patient data synced from the source HIS
@@ -16,32 +63,33 @@ Local clinical continuity layer for hospitals. When the main cloud HIS/EMR becom
 - Not a Disaster Recovery system
 - Not a full EMR/HIS replacement
 - No structured order entry, medication prescribing, or billing — clinical notes are free-text documentation only
-- Not a reconciliation engine — local notes and temp patients are for manual reconciliation when the HIS recovers
+- Not a real-time two-way sync — write-back to the HIS happens after recovery, through a separate n8n reconciliation workflow
 - Not designed for internet-facing deployment
 
 ## Architecture
 
 ```
-┌─────────────┐     n8n sync      ┌──────────────┐
-│  Source HIS  │ ──────────────>   │  PostgreSQL   │
-│  (Cloud)     │    (30s-10min)    │  (Local Edge) │
-└─────────────┘                    └──────┬───────┘
-                                          │
-                              ┌───────────┼───────────┐
-                              │     NestJS API        │
-                              │     (Port 3100)       │
-                              └───────────┬───────────┘
-                                          │
-                              ┌───────────┼───────────┐
-                              │    Next.js Frontend   │
-                              │     (Port 3000)       │
-                              └───────────┬───────────┘
-                                          │
-                              ┌───────────┼───────────┐
-                              │       Nginx           │
-                              │     (Port 80)         │
-                              └───────────────────────┘
+    Source HIS (cloud)
+           │  n8n sync, 30s-10min
+           ▼
+  ┌─────────────────────────────────────────────────┐
+  │  Hospital edge server (Docker Compose)          │
+  │                                                 │
+  │   PostgreSQL 16 ──────┐                         │
+  │   (bcp_db)            ▼                         │
+  │                  NestJS API  :3100 ◄──┐         │
+  │   PDF storage ────────┘               │         │
+  │                                       │ /api/*  │
+  │                  Next.js UI  :3000 ◄──┤         │
+  │                                       │         │
+  │                        Nginx :80 ─────┘         │
+  └────────────────────────┬────────────────────────┘
+                           │  hospital LAN
+                           ▼
+                  Clinical workstations
 ```
+
+Nginx is the entry point, not the last link in a chain: it routes `/api/*` to the NestJS API and everything else to the Next.js UI.
 
 **Services**: PostgreSQL 16, NestJS API, Next.js 14 UI, n8n (sync/ETL), Nginx (reverse proxy)
 
