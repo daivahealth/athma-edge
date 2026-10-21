@@ -15,6 +15,9 @@ not do:
 - **Network policy** the hospital applies uniformly — IP allow-lists, client
   certificates, request logging to a central collector.
 
+Step-by-step instructions, including certificates and verification, are in
+[docs/deployment/REVERSE-PROXY.md](../docs/deployment/REVERSE-PROXY.md#adding-tls).
+
 `example.conf` is a working starting point for nginx, kept for reference. It is
 not mounted, not built and not tested by CI; treat it as a sample to adapt.
 

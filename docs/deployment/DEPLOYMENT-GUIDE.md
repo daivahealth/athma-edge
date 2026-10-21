@@ -357,6 +357,14 @@ Windows Defender Firewall may block external access. To allow LAN access:
 2. Login with username `admin` and the bootstrap password
 3. Change the admin password immediately via User Management
 
+### Serve it over HTTPS (optional)
+
+Athma Edge speaks HTTP. If the hospital wants TLS, put a proxy in front and
+terminate it there — see [Adding TLS](REVERSE-PROXY.md#adding-tls) for the
+certificate choice, the three settings involved, how to verify the session
+cookie is actually marked `Secure`, and why renewal needs an owner before
+you finish.
+
 ### Create Clinical Users
 
 1. Navigate to **User Management** (admin only)
