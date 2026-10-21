@@ -69,8 +69,10 @@ Frontend runs at http://localhost:3000
 | Field | Value |
 |-------|-------|
 | Username | admin |
-| Password | BcpAdmin@2024 |
+| Password | Whatever you set as `ADMIN_BOOTSTRAP_PASSWORD` before seeding, or the one-time random password the seed prints |
 | Role | ADMIN |
+
+There is no default password. The seed shows a generated one once and does not keep it; if you lose it, re-seed a fresh database.
 
 Change the admin password after first login.
 

@@ -119,14 +119,18 @@ docker compose exec bcp-api npx prisma db seed
 # n8n: http://localhost:5678
 ```
 
-## Default Credentials
+## First Login
+
+**There are no default passwords.** Both were removed deliberately; anything you may have seen published here before does not work.
 
 | Service | Username | Password |
 |---------|----------|----------|
-| BCP App | admin | BcpAdmin@2024 |
-| n8n | admin | n8nAdmin@2024 |
+| BCP App | `admin` | Set `ADMIN_BOOTSTRAP_PASSWORD` in `.env` before seeding, or copy the one-time random password the seed prints |
+| n8n | `${N8N_USER}` (default `admin`) | `N8N_PASSWORD` in `.env` — required, the stack refuses to start without it |
 
-**Change these immediately in production.**
+The seed prints the generated password exactly once and never stores it in plain text. If you miss it, re-seed a fresh database or reset the hash on the `bcp_user` row.
+
+Change the admin password through **User Management** after first login, and create named accounts for clinical staff rather than sharing `admin`.
 
 ## Roles
 
