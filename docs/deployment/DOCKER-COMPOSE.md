@@ -8,7 +8,6 @@ Service topology for the Athma Edge BCP application.
 |---------|-------|--------------|-------------|---------|
 | postgres | postgres:16-alpine | 5432 | 127.0.0.1:5432 | Database |
 | bcp-api | Build from ./backend | 3100 | — | NestJS API |
-| bcp-ui | Build from ./frontend | 3000 | — | Next.js UI |
 | n8n | n8nio/n8n:latest | 5678 | 127.0.0.1:5678 | Sync/ETL workflows |
 | nginx | nginx:alpine | 80 | 80 | Reverse proxy |
 
@@ -29,7 +28,7 @@ All services on `bcp-network` (bridge driver).
 ## Dependencies
 
 ```
-postgres (healthcheck) ← bcp-api ← bcp-ui ← nginx
+postgres (healthcheck) ← bcp-api ← nginx (also serves the SPA)
 postgres ← n8n
 ```
 
@@ -43,8 +42,7 @@ Mounted to `/docker-entrypoint-initdb.d/` on the postgres container:
 
 - **postgres**: `pg_isready -U bcp_user -d bcp_db` every 10s
 - **bcp-api**: depends on postgres health
-- **bcp-ui**: depends on bcp-api
-- **nginx**: depends on bcp-ui and bcp-api
+- **nginx**: depends on bcp-api. Built from `nginx/Dockerfile`, which compiles the frontend and bakes `dist/` into the image — there is no separate UI container
 
 ## Environment Variables
 

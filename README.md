@@ -78,20 +78,19 @@ Everything written during an outage goes back into the main system afterwards. S
   │   PostgreSQL 16 ──────┐                         │
   │   (bcp_db)            ▼                         │
   │                  NestJS API  :3100 ◄──┐         │
-  │   PDF storage ────────┘               │         │
-  │                                       │ /api/*  │
-  │                  Next.js UI  :3000 ◄──┤         │
+  │   PDF storage ────────┘               │ /api/*  │
   │                                       │         │
-  │                        Nginx :80 ─────┘         │
+  │             Nginx :80 ────────────────┘         │
+  │             + the built SPA, served from disk   │
   └────────────────────────┬────────────────────────┘
                            │  hospital LAN
                            ▼
                   Clinical workstations
 ```
 
-Nginx is the entry point, not the last link in a chain: it routes `/api/*` to the NestJS API and everything else to the Next.js UI.
+Nginx is the entry point: it routes `/api/*` to the NestJS API and serves the built single-page app for everything else. There is no separate UI server process.
 
-**Services**: PostgreSQL 16, NestJS API, Next.js 14 UI, n8n (sync/ETL), Nginx (reverse proxy)
+**Services**: PostgreSQL 16, NestJS API, n8n (sync/ETL), Nginx (reverse proxy + static SPA) — four containers
 
 ## Prerequisites
 
@@ -189,7 +188,7 @@ athma-edge/
 ├── CLAUDE.md / AGENTS.md    # AI agent operating contracts
 ├── docs/                     # Full documentation tree
 ├── backend/                  # NestJS API + Prisma
-├── frontend/                 # Next.js 14 UI
+├── frontend/                 # React + Vite SPA
 ├── nginx/                    # Reverse proxy config
 ├── n8n/workflows/            # Sync workflow templates
 ├── init-scripts/             # PostgreSQL init scripts

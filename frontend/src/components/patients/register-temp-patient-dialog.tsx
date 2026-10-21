@@ -1,7 +1,5 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useCreateTempPatient } from '@/modules/patients/hooks';
 import { CARE_SETTINGS, CARE_SETTING_LABELS } from '@/lib/utils/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,7 +13,7 @@ interface RegisterTempPatientDialogProps {
 }
 
 export function RegisterTempPatientDialog({ open, onOpenChange }: RegisterTempPatientDialogProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const mutation = useCreateTempPatient();
   const [form, setForm] = useState({
     patientName: '',
@@ -58,7 +56,7 @@ export function RegisterTempPatientDialog({ open, onOpenChange }: RegisterTempPa
       onSuccess: (result: any) => {
         resetForm();
         onOpenChange(false);
-        router.push(`/patients/${result.mrn}`);
+        navigate(`/patients/${result.mrn}`);
       },
     });
   };

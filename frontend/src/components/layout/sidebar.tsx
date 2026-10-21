@@ -1,8 +1,5 @@
-'use client';
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { Link, useLocation } from 'react-router-dom';
 import { Users, Search, Activity, FileText, ClipboardPen, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -17,7 +14,7 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const { user, logout } = useAuthStore();
   const userRoles = user?.roles ?? [];
 
@@ -36,7 +33,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-60 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <Image src="/athma-mark.svg" alt="Athma" width={28} height={28} className="brightness-0 invert" />
+        <img src="/athma-mark.svg" alt="Athma" width={28} height={28} className="brightness-0 invert" />
         <div>
           <p className="text-sm font-bold tracking-wide text-white">edge</p>
           <p className="text-[10px] uppercase tracking-widest text-sidebar-foreground/60">BCP Console</p>
@@ -49,7 +46,7 @@ export function Sidebar() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all',
                 isActive

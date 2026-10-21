@@ -1,7 +1,5 @@
-'use client';
-
 import { useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Plus, StickyNote, Search, ChevronLeft, ChevronRight, ChevronRight as ArrowRight, FileText } from 'lucide-react';
 import { useAllClinicalNotes } from '@/modules/clinical-notes/hooks';
 import type { BcpNoteType } from '@/modules/clinical-notes/types';
@@ -64,7 +62,7 @@ export default function ClinicalNotesListPage() {
             BCP clinical documentation across all patients
           </p>
         </div>
-        <Link href="/clinical-notes/new">
+        <Link to="/clinical-notes/new">
           <Button>
             <Plus className="mr-1.5 h-4 w-4" /> Create Note
           </Button>
@@ -120,7 +118,7 @@ export default function ClinicalNotesListPage() {
               </div>
               <p className="text-lg font-medium text-foreground">No clinical notes yet</p>
               <p className="text-sm">Notes created during BCP events will appear here.</p>
-              <Link href="/clinical-notes/new">
+              <Link to="/clinical-notes/new">
                 <Button variant="outline" size="sm" className="mt-1">
                   <Plus className="mr-1.5 h-4 w-4" /> Create First Note
                 </Button>
@@ -140,7 +138,7 @@ export default function ClinicalNotesListPage() {
             {notes.map((note) => (
               <Link
                 key={note.id}
-                href={`/clinical-notes/${note.mrn}`}
+                to={`/clinical-notes/${note.mrn}`}
                 className="group block"
               >
                 <Card className="transition-all duration-150 hover:shadow-md hover:border-primary/20">

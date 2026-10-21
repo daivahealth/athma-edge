@@ -12,10 +12,11 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Hospital Edge Server                         │
 │                                                                  │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐ │
-│  │  Nginx   │───▶│  BCP UI  │    │  BCP API │    │   n8n    │ │
-│  │  :80     │───▶│  :3000   │    │  :3100   │    │  :5678   │ │
-│  └──────────┘    └──────────┘    └──────────┘    └──────────┘ │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐                 │
+│  │  Nginx   │    │  BCP API │    │   n8n    │                 │
+│  │  :80     │───▶│  :3100   │    │  :5678   │                 │
+│  │ + SPA    │    └──────────┘    └──────────┘                 │
+│  └──────────┘                                                  │
 │       │                               │                │        │
 │       │                               ▼                ▼        │
 │       │                         ┌──────────┐                    │
@@ -42,12 +43,13 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 
 ### Nginx (Reverse Proxy)
 - Routes `/api/*` requests to BCP API (NestJS)
-- Routes all other requests to BCP UI (Next.js)
+- Serves the built SPA directly from `/usr/share/nginx/html`, with a `try_files` fallback to `index.html` so client-side routes resolve
 - Serves on port 80 (443 with TLS if configured)
 - n8n accessible directly on port 5678 (admin only)
 
-### BCP UI (Next.js 14)
-- App Router with route groups: `(auth)` for login, `(main)` for authenticated pages
+### BCP UI (React + Vite, served by nginx)
+- A single-page application. **There is no UI server process** — nginx serves the built bundle as static files
+- React Router: `/login` is public, every other route sits under `MainLayout`, which runs the auth guard
 - Radix UI + Tailwind CSS for components
 - Zustand for auth state, React Query for server state
 - Displays persistent BCP LOCAL MODE banner

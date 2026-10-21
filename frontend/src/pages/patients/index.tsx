@@ -1,7 +1,5 @@
-'use client';
-
 import { useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Search, ChevronLeft, ChevronRight, UserPlus } from 'lucide-react';
 import { usePatientSearch } from '@/modules/patients/hooks';
 import type { PatientSearchParams } from '@/modules/patients/types';
@@ -118,7 +116,7 @@ export default function PatientSearchPage() {
                     {data.data.map((patient) => (
                       <tr key={patient.id} className="transition-colors hover:bg-muted/40">
                         <td className="px-4 py-3">
-                          <Link href={`/patients/${patient.mrn}`} className="font-medium text-primary hover:underline">
+                          <Link to={`/patients/${patient.mrn}`} className="font-medium text-primary hover:underline">
                             {patient.mrn}
                           </Link>
                           {(patient as any).sourceSystem === BCP_LOCAL_SOURCE && (

@@ -1,5 +1,3 @@
-'use client';
-
 import { Activity, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
 import { useRoleGuard } from '@/hooks/use-auth-guard';
 import { useSyncStatus } from '@/modules/sync/hooks';

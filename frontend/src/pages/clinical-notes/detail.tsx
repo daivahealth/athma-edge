@@ -1,8 +1,5 @@
-'use client';
-
+import { Link, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { ArrowLeft, Plus, StickyNote } from 'lucide-react';
 import { useClinicalNotes } from '@/modules/clinical-notes/hooks';
 import { useClinicalProfile } from '@/modules/patients/hooks';
@@ -41,7 +38,9 @@ const NOTE_TYPE_VARIANT: Record<BcpNoteType, 'default' | 'secondary' | 'destruct
 };
 
 export default function PatientNotesDetailPage() {
-  const { mrn } = useParams<{ mrn: string }>();
+  // The route pattern cannot match without :mrn, but React Router
+  // still types params as optional.
+  const mrn = useParams<{ mrn: string }>().mrn!;
   const [filterType, setFilterType] = useState<string>('ALL');
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -55,7 +54,7 @@ export default function PatientNotesDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/clinical-notes" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+        <Link to="/clinical-notes" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" /> Back to Notes
         </Link>
       </div>
@@ -64,7 +63,7 @@ export default function PatientNotesDetailPage() {
         <div>
           <h1 className="text-2xl font-bold">{patientName || mrn}</h1>
           <p className="text-sm text-muted-foreground">
-            <Link href={`/patients/${mrn}`} className="text-primary hover:underline">{mrn}</Link>
+            <Link to={`/patients/${mrn}`} className="text-primary hover:underline">{mrn}</Link>
             {' '}· Clinical Notes
           </p>
         </div>
