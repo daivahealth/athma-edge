@@ -5,32 +5,32 @@ Local clinical continuity layer for hospitals. When the main cloud HIS/EMR becom
 ## How It Works
 
 ```mermaid
+%%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 420, "nodeSpacing": 40, "rankSpacing": 46, "padding": 14}, "themeVariables": {"edgeLabelBackground": "#ffffff"}} }%%
 flowchart TB
-    HIS["Main hospital system (cloud)<br/>where patient records really live"]
+    HIS["Main hospital system — the cloud HIS<br/><small>where the patient record really lives</small>"]
 
-    subgraph EDGE["Athma Edge — a small server inside the hospital"]
-        direction LR
-        COPY["An up-to-date copy<br/>today's patients, allergies,<br/>diagnosis, medicines, latest results"]
-        DOCS["Their documents<br/>lab and scan reports,<br/>discharge summaries"]
-        APP["The Athma Edge screen<br/>search a patient, read their details,<br/>write notes, register a walk-in"]
-        COPY --> APP
-        DOCS --> APP
+    subgraph EDGE ["Inside the hospital"]
+        direction TB
+        DATA["A fresh copy of today's patients<br/><small>allergies · diagnosis · medicines · latest results<br/>lab reports · scans · discharge summaries</small>"]
+        APP["The Athma Edge screen<br/><small>search a patient · read their details<br/>write notes · register a walk-in</small>"]
+        DATA --> APP
     end
 
-    STAFF["Doctors and nurses<br/>on any hospital computer"]
+    STAFF["Doctors and nurses<br/><small>on any hospital computer</small>"]
 
-    HIS -->|"copied down every few minutes<br/>— the only thing an outage breaks"| EDGE
+    HIS -- "copied every few minutes<br/>breaks during an outage" --> EDGE
     APP --> STAFF
 
-    classDef cloud fill:#fce7f3,stroke:#be185d,stroke-width:2px,color:#111
-    classDef local fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#111
-    classDef app fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#111
-    classDef people fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#111
+    classDef cloud fill:#fdf2f8,stroke:#be185d,stroke-width:2px,color:#1f2937
+    classDef local fill:#eff6ff,stroke:#2563eb,stroke-width:2px,color:#1f2937
+    classDef app fill:#fff7ed,stroke:#ea580c,stroke-width:2px,color:#1f2937
+    classDef people fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#1f2937
     class HIS cloud
-    class COPY,DOCS local
+    class DATA local
     class APP app
     class STAFF people
-    linkStyle 2 stroke:#dc2626,stroke-width:3px,color:#dc2626
+    style EDGE fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,color:#475569
+    linkStyle 1 stroke:#dc2626,stroke-width:3px,color:#b91c1c
 ```
 
 **In one sentence:** Athma Edge quietly keeps a copy of today's patients on a server inside the hospital, so that when the cloud system goes down, staff can still look patients up and write things down.
