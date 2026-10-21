@@ -5,6 +5,9 @@ import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-option
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import express from 'express';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
@@ -52,8 +55,17 @@ async function bootstrap() {
     helmet({
       contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false,
+      // nginx used to set DENY; helmet defaults to SAMEORIGIN. Keep the
+      // stricter value now that the application is the only thing setting it.
+      frameguard: { action: 'deny' },
+      referrerPolicy: { policy: 'no-referrer' },
     }),
   );
+  // Also previously set by nginx, and not something helmet does by default.
+  app.use((_req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
   app.use(
     '/api/auth/login',
     rateLimit({
@@ -90,6 +102,41 @@ async function bootstrap() {
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('api/docs', app, document);
+  }
+
+  // Serve the built SPA. There is no nginx in the stack: a hospital that
+  // wants TLS or its own routing puts a proxy in front of this service.
+  //
+  // Registered before app.listen(), so this middleware runs ahead of Nest's
+  // router — the fallback therefore excludes /api/ explicitly rather than
+  // relying on ordering.
+  const spaRoot = process.env.SPA_ROOT || join(__dirname, '..', 'public');
+  if (existsSync(join(spaRoot, 'index.html'))) {
+    const httpAdapter = app.getHttpAdapter().getInstance();
+
+    // Vite fingerprints these filenames, so they can be cached hard.
+    httpAdapter.use(
+      '/assets',
+      express.static(join(spaRoot, 'assets'), {
+        immutable: true,
+        maxAge: '1y',
+      }),
+    );
+
+    // Everything else shipped in the bundle: icons, favicon, and so on.
+    httpAdapter.use(express.static(spaRoot, { index: false, maxAge: 0 }));
+
+    // Any non-API GET is a client-side route and must receive index.html,
+    // which is never cached — otherwise a deploy leaves browsers asking for
+    // asset filenames that no longer exist.
+    httpAdapter.get(/^\/(?!api\/).*/, (_req: express.Request, res: express.Response) => {
+      res.setHeader('Cache-Control', 'no-store, must-revalidate');
+      res.sendFile(join(spaRoot, 'index.html'));
+    });
+
+    logger.log(`Serving SPA from ${spaRoot}`);
+  } else {
+    logger.warn(`No SPA bundle at ${spaRoot} — serving the API only`);
   }
 
   const port = process.env.PORT || 3100;

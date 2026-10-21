@@ -6,7 +6,7 @@ Step-by-step instructions for deploying Athma Edge on a hospital edge server run
 
 **Size for the outage, not for the quiet day.** On a normal day the edge server does almost nothing — it syncs in the background and a handful of people look at it. During a BCP event it carries the clinical read load of the entire hospital, the load the HIS normally handles. That hour is what the box must survive, so every figure below is a peak-load figure.
 
-All five containers (PostgreSQL, API, UI, n8n, nginx) share one host, and `docker-compose.yml` sets no per-container resource limits, so they compete for whatever the box has.
+All three containers (PostgreSQL, the API — which also serves the SPA — and n8n) share one host, and `docker-compose.yml` sets no per-container resource limits, so they compete for whatever the box has.
 
 ### By hospital size
 
@@ -430,22 +430,22 @@ Another service (IIS on Windows, Apache on Linux) may be using port 80.
 **Linux:**
 ```bash
 sudo lsof -i :80
-# Stop the conflicting service, or change the nginx port in docker-compose.yml
 ```
 
 **Windows:**
 ```powershell
 netstat -ano | findstr :80
 # Stop IIS: iisreset /stop
-# Or change the nginx port in docker-compose.yml
 ```
 
-To use a different port, edit `docker-compose.yml`:
-```yaml
-nginx:
-  ports:
-    - '8080:80'   # Access via http://<server-ip>:8080
+Either stop the conflicting service, or move Athma Edge to another port — no
+file edit needed, set `HTTP_PORT` in `.env`:
+
 ```
+HTTP_PORT=8080      # then reach it at http://<server-ip>:8080
+```
+
+Then `docker compose up -d`. If you change this, set `FRONTEND_ORIGIN` to match.
 
 ### WSL 2 issues on Windows
 

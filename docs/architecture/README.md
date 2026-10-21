@@ -10,4 +10,4 @@ System architecture documentation for Athma Edge.
 ## Related
 
 - [ADRs](../ADR/) — architecture decision records explaining key design choices
-- [Deployment](../deployment/) — Docker Compose topology, nginx routing, n8n workflows
+- [Deployment](../deployment/) — Docker Compose topology, n8n workflows, optional reverse proxy

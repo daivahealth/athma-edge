@@ -77,20 +77,18 @@ Everything written during an outage goes back into the main system afterwards. S
   │                                                 │
   │   PostgreSQL 16 ──────┐                         │
   │   (bcp_db)            ▼                         │
-  │                  NestJS API  :3100 ◄──┐         │
-  │   PDF storage ────────┘               │ /api/*  │
-  │                                       │         │
-  │             Nginx :80 ────────────────┘         │
-  │             + the built SPA, served from disk   │
+  │                  NestJS API  :80 ◄────┐         │
+  │   PDF storage ────────┘               │         │
+  │   serves /api/* and the built SPA ────┘         │
   └────────────────────────┬────────────────────────┘
                            │  hospital LAN
                            ▼
                   Clinical workstations
 ```
 
-Nginx is the entry point: it routes `/api/*` to the NestJS API and serves the built single-page app for everything else. There is no separate UI server process.
+The NestJS service is the entry point: it answers `/api/*` and serves the built single-page app for everything else, on one origin. There is no reverse proxy and no separate UI process. A hospital that wants TLS puts its own proxy in front — see [nginx/README.md](nginx/README.md).
 
-**Services**: PostgreSQL 16, NestJS API, n8n (sync/ETL), Nginx (reverse proxy + static SPA) — four containers
+**Services**: PostgreSQL 16, NestJS API (+ the SPA), n8n (sync/ETL) — three containers
 
 ## Prerequisites
 
@@ -193,7 +191,7 @@ athma-edge/
 ├── docs/                     # Full documentation tree
 ├── backend/                  # NestJS API + Prisma
 ├── frontend/                 # React + Vite SPA
-├── nginx/                    # Reverse proxy config
+├── nginx/                    # Sample config for an optional external proxy
 ├── n8n/workflows/            # Sync workflow templates
 ├── init-scripts/             # PostgreSQL init scripts
 └── docker-compose.yml        # Service orchestration

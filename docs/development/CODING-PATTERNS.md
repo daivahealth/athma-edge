@@ -107,4 +107,4 @@ modules/
 Single Axios instance at `lib/api/client.ts`:
 - Request interceptor: attaches Bearer token from auth store
 - Response interceptor: on 401, clears session, redirects to /login
-- Base URL: `/api` (proxied by nginx in production, direct in dev)
+- Base URL: `/api` (same origin in production, Vite dev-server proxy in dev)

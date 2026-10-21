@@ -44,7 +44,7 @@ Athma Edge is a **Phase-1 Hospital BCP (Business Continuity Plan) Edge Applicati
 - [docs/api/](docs/api): API contracts, endpoint behavior, and integration references.
 - [docs/features/](docs/features): feature behavior, workflows, and domain-specific implementation detail.
 - [docs/development/](docs/development): engineering workflow, commands, and implementation guidance.
-- [docs/deployment/](docs/deployment): Docker Compose, nginx, n8n workflow references.
+- [docs/deployment/](docs/deployment): Docker Compose and n8n workflow references.
 - [docs/security/](docs/security): security, RBAC, and audit logging references.
 - [docs/runbooks/](docs/runbooks): operational procedures, setup, and troubleshooting.
 
@@ -71,7 +71,7 @@ When a change is made, update the correct documentation family.
   - `docs/features/`
 - Developer setup, local workflow, commands, coding patterns:
   - `docs/development/`
-- Docker Compose, nginx, n8n workflow changes:
+- Docker Compose, n8n workflow changes:
   - `docs/deployment/`
 - Auth, RBAC, audit logging changes:
   - `docs/security/`
@@ -111,7 +111,7 @@ athma-edge/
 │       ├── hooks/          # Shared React hooks
 │       └── providers/      # React context providers
 ├── docs/                   # Canonical documentation tree
-├── nginx/                  # Nginx reverse proxy config
+├── nginx/                  # Sample config for an OPTIONAL external proxy (not part of the stack)
 ├── n8n/                    # n8n workflow JSON exports
 └── init-scripts/           # PostgreSQL initialization scripts
 ```
@@ -144,7 +144,7 @@ These rules are unique to the BCP edge application and must not be violated.
 - **Always show BCP LOCAL MODE.** The UI must permanently display a non-dismissible banner indicating this is the BCP local system, not the primary HIS.
 - **External IDs are VARCHAR, not UUID.** All IDs from the source HIS (patient_id, mrn, uhid, encounter_id, visit_number, consultant_id, tenant_id, source_system) must be VARCHAR. Do not generate UUIDs for these.
 - **Soft delete only.** Never hard-delete patient/clinical records. Use `is_active`, `active_from`, `active_until`, `business_date` for lifecycle management.
-- **No Kafka, no Kubernetes, no Elasticsearch, no Redis.** Keep the stack simple: NestJS + PostgreSQL + n8n + nginx + Docker Compose.
+- **No Kafka, no Kubernetes, no Elasticsearch, no Redis.** Keep the stack simple: NestJS + PostgreSQL + n8n + Docker Compose. Three containers. The API serves the SPA itself; there is no reverse proxy in the stack.
 
 ## Backend Rules
 
@@ -191,7 +191,6 @@ These rules are unique to the BCP edge application and must not be violated.
 | UI | Radix UI + Tailwind CSS | Latest |
 | State | Zustand + React Query v5 | Latest |
 | Sync/ETL | n8n | Latest |
-| Proxy | Nginx | Alpine |
 | Deployment | Docker Compose | v2 |
 
 ## Development Workflow

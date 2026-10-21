@@ -8,7 +8,7 @@ REST API documentation for Athma Edge BCP application.
 /api
 ```
 
-All endpoints are prefixed with `/api`. When running locally, the full URL is `http://localhost:3100/api` (direct) or `http://localhost/api` (via nginx).
+All endpoints are prefixed with `/api`. Running the stack, the full URL is `http://localhost/api`; the same service also serves the SPA on that origin. Running the API alone outside Docker it is `http://localhost:3100/api`.
 
 ## Authentication
 

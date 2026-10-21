@@ -23,8 +23,9 @@ services:
 
   bcp-api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      # Repo root: the image builds the SPA as well as the API.
+      context: .
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-bcpuser}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-athma_edge}?schema=public
@@ -36,6 +37,11 @@ services:
       PORT: 3100
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost}
       API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
+    ports:
+      # This service fronts the stack: it serves the SPA and the API on one
+      # origin. HTTP only — a hospital that wants TLS puts its own reverse
+      # proxy in front (nginx/README.md has a sample config).
+      - '${HTTP_PORT:-80}:3100'
     volumes:
       - ./local-bcp-storage/pdfs:/data/pdfs
     depends_on:
@@ -69,17 +75,6 @@ services:
 
   # Serves the built SPA directly and proxies /api to bcp-api. There is no
   # separate UI container since the frontend moved from Next.js to Vite.
-  nginx:
-    build:
-      context: .
-      dockerfile: nginx/Dockerfile
-    restart: unless-stopped
-    ports:
-      - '80:80'
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - bcp-api
 
 volumes:
   postgres_data:
