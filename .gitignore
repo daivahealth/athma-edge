@@ -47,3 +47,6 @@ n8n-data/
 
 # Docker
 postgres-data/
+
+# Local scratch output (not part of the project)
+.scratch/
