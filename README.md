@@ -188,6 +188,7 @@ Backend runs on http://localhost:3100, frontend on http://localhost:3000.
 ```
 athma-edge/
 ├── CLAUDE.md / AGENTS.md    # AI agent operating contracts
+├── LICENSE                   # Apache License 2.0
 ├── docs/                     # Full documentation tree
 ├── backend/                  # NestJS API + Prisma
 ├── frontend/                 # React + Vite SPA
@@ -198,3 +199,7 @@ athma-edge/
 ```
 
 See [docs/README.md](docs/README.md) for complete documentation navigation.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).

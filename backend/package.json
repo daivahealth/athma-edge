@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Athma Edge BCP API - Hospital Business Continuity Plan",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "nest build",
     "start": "nest start",
