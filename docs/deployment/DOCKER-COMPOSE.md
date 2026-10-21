@@ -6,7 +6,7 @@ Service topology for the Athma Edge BCP application.
 
 | Service | Image | Internal Port | Exposed Port | Purpose |
 |---------|-------|--------------|-------------|---------|
-| postgres | postgres:16-alpine | 5432 | 127.0.0.1:5432 | Database |
+| postgres | postgres:16-alpine | 5432 | 127.0.0.1:**5433** | Database. Host port is 5433 to avoid colliding with other local Postgres instances; inside the stack it is `postgres:5432` |
 | bcp-api | Build from ./backend | 3100 | — | NestJS API |
 | n8n | n8nio/n8n:latest | 5678 | 127.0.0.1:5678 | Sync/ETL workflows |
 | nginx | nginx:alpine | 80 | 80 | Reverse proxy |
