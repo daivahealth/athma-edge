@@ -32,3 +32,21 @@ test('bootstrap enables rate limiting and secure middleware', () => {
   assert.match(source, /helmet\(/);
   assert.match(source, /cookieParser\(/);
 });
+
+test('login audit records who logged in, not an empty username', () => {
+  const source = read('src/common/interceptors/audit.interceptor.ts');
+  // The login route is @Public(), so request.user is undefined while it runs.
+  // The username has to come from the response or the submitted body.
+  assert.match(source, /tap\(\(response\)/);
+  assert.match(source, /LOGIN_SUCCESS' \? response\?\.data\?\.user/);
+  assert.match(source, /request\.body\?\.username/);
+});
+
+test('runtime image ships tsconfig.json so the documented seed command works', () => {
+  const dockerfile = read('Dockerfile');
+  // `npx prisma db seed` runs ts-node against prisma/seed.ts. Without
+  // tsconfig.json present ts-node takes Node's ESM path and dies with
+  // ERR_UNKNOWN_FILE_EXTENSION.
+  assert.match(dockerfile, /COPY --from=builder \/app\/tsconfig\.json/);
+});
+
