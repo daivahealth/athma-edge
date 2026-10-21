@@ -7,7 +7,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       POSTGRES_DB: ${POSTGRES_DB:-athma_edge}
     ports:
-      - '127.0.0.1:5432:5432'
+      # Host port 5433, container port 5432. 5432 collides with other
+      # Postgres instances a developer is likely to be running; nothing
+      # inside the stack uses this mapping, since bcp-api, n8n and
+      # pgadmin reach postgres:5432 over the compose network.
+      - '127.0.0.1:5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
