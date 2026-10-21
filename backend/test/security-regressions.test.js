@@ -50,3 +50,28 @@ test('runtime image ships tsconfig.json so the documented seed command works', (
   assert.match(dockerfile, /COPY --from=builder \/app\/tsconfig\.json/);
 });
 
+test('no concrete admin or n8n password is published in the docs', () => {
+  // These strings were removed from the code as a security fix, but lived on
+  // in README.md and DEVELOPER-ONBOARDING.md as "Default Credentials" —
+  // which invites an operator to set them for real on a box holding
+  // patient data.
+  const docs = [
+    '../README.md',
+    '../docs/development/DEVELOPER-ONBOARDING.md',
+    '../docs/runbooks/INITIAL-SETUP.md',
+    '../docs/security/AUTH-AND-RBAC.md',
+    '../docs/deployment/DEPLOYMENT-GUIDE.md',
+  ];
+  for (const doc of docs) {
+    const source = read(doc);
+    assert.doesNotMatch(source, /BcpAdmin@/, `${doc} publishes an admin password`);
+    assert.doesNotMatch(source, /n8nAdmin@/, `${doc} publishes an n8n password`);
+  }
+});
+
+test('the seed never falls back to a hard-coded password', () => {
+  const source = read('prisma/seed.ts');
+  assert.match(source, /ADMIN_BOOTSTRAP_PASSWORD/);
+  assert.match(source, /randomBytes\(/);
+});
+
