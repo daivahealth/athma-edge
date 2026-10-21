@@ -8,7 +8,7 @@ Authentication and role-based access control for the BCP application.
 2. Server validates credentials against `bcp_user` table (bcrypt hash comparison)
 3. Server loads user roles from `bcp_user_role` + `bcp_role` tables
 4. Server issues JWT with payload: `{ sub, username, tenantId, roles[] }`
-5. Server stores the JWT in an HttpOnly `bcp_session` cookie
+5. Server stores the JWT in an HttpOnly `bcp_session` cookie, marked `Secure` when the request arrived over HTTPS (see [Adding TLS](../deployment/REVERSE-PROXY.md#adding-tls))
 6. Client uses credentialed browser requests; JavaScript cannot read the session cookie
 7. Server validates JWT on every request via global `JwtAuthGuard`
 

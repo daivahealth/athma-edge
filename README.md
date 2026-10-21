@@ -86,7 +86,7 @@ Everything written during an outage goes back into the main system afterwards. S
                   Clinical workstations
 ```
 
-The NestJS service is the entry point: it answers `/api/*` and serves the built single-page app for everything else, on one origin. There is no reverse proxy and no separate UI process. A hospital that wants TLS puts its own proxy in front — see [nginx/README.md](nginx/README.md).
+The NestJS service is the entry point: it answers `/api/*` and serves the built single-page app for everything else, on one origin. There is no reverse proxy and no separate UI process. A hospital that wants TLS puts its own proxy in front — see [Adding TLS](docs/deployment/REVERSE-PROXY.md#adding-tls).
 
 **Services**: PostgreSQL 16, NestJS API (+ the SPA), n8n (sync/ETL) — three containers
 
