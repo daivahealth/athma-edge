@@ -64,7 +64,7 @@ npm run dev
 # Typecheck, then build static files into dist/
 npm run build
 
-# Serve the built dist/ locally, to check it as nginx will
+# Serve the built dist/ locally, as the API will serve it
 npm run preview
 
 # Typecheck only
@@ -92,7 +92,7 @@ docker compose exec postgres psql -U bcp_user -d bcp_db
 
 # Rebuild after code changes
 docker compose up -d --build bcp-api
-docker compose up -d --build nginx   # rebuilds the SPA and the proxy
+docker compose up -d --build bcp-api   # rebuilds the SPA and the API
 
 # Full restart
 docker compose down && docker compose up -d
@@ -196,7 +196,7 @@ Run and review all applicable scans and checks including:
 - container vulnerabilities
 - exposed ports/services
 - unsafe compose configs
-- insecure nginx configs
+- insecure reverse-proxy configs
 - unsafe environment variable usage
 - privilege escalation risks
 - CI/CD secret exposure

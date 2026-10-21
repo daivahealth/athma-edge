@@ -82,7 +82,7 @@ Change the admin password after first login.
 |---------|-----|
 | BCP UI | http://localhost:3000 |
 | BCP API | http://localhost:3100/api |
-| BCP API (via nginx) | http://localhost/api |
+| BCP API | http://localhost/api |
 | n8n | http://localhost:5678 |
 | Prisma Studio | Run `npx prisma studio` in backend/ |
 
@@ -96,7 +96,7 @@ athma-edge/
 ├── frontend/         # React + Vite SPA
 │   └── src/          # Application source
 ├── docs/             # Documentation
-├── nginx/            # Reverse proxy config
+├── nginx/            # Sample config for an optional external proxy
 ├── n8n/              # Workflow templates
 └── init-scripts/     # PostgreSQL init
 ```

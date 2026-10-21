@@ -12,11 +12,10 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Hospital Edge Server                         │
 │                                                                  │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐                 │
-│  │  Nginx   │    │  BCP API │    │   n8n    │                 │
-│  │  :80     │───▶│  :3100   │    │  :5678   │                 │
-│  │ + SPA    │    └──────────┘    └──────────┘                 │
-│  └──────────┘                                                  │
+│  ┌────────────────────┐          ┌──────────┐                 │
+│  │  BCP API  :80      │          │   n8n    │                 │
+│  │  /api/*  + the SPA │          │  :5678   │                 │
+│  └──────────┬─────────┘          └──────────┘                 │
 │       │                               │                │        │
 │       │                               ▼                ▼        │
 │       │                         ┌──────────┐                    │
@@ -41,14 +40,17 @@ Athma Edge is a local clinical continuity application deployed on a hospital edg
 
 ## Component Responsibilities
 
-### Nginx (Reverse Proxy)
-- Routes `/api/*` requests to BCP API (NestJS)
-- Serves the built SPA directly from `/usr/share/nginx/html`, with a `try_files` fallback to `index.html` so client-side routes resolve
-- Serves on port 80 (443 with TLS if configured)
-- n8n accessible directly on port 5678 (admin only)
+### Reverse proxy — none
+There is no proxy in the stack. The API answers `/api/*` and serves the SPA on the same port, so a request never crosses a process boundary before reaching the application. HTTP only.
 
-### BCP UI (React + Vite, served by nginx)
-- A single-page application. **There is no UI server process** — nginx serves the built bundle as static files
+A hospital that needs TLS, a shared hostname or its own network policy puts a proxy in front of the stack — that is the hospital's infrastructure, not the application's. See [Reverse Proxy](../deployment/REVERSE-PROXY.md).
+
+n8n is reachable directly on port 5678 (admin only).
+
+### BCP UI (React + Vite, served by the API)
+- A single-page application. **There is no UI server process** — the API serves the built bundle from `public/` inside its image
+- Any non-`/api/` GET falls back to `index.html`, so client-side routes resolve
+- Hashed assets under `/assets/` are cached for a year; `index.html` is never cached
 - React Router: `/login` is public, every other route sits under `MainLayout`, which runs the auth guard
 - Radix UI + Tailwind CSS for components
 - Zustand for auth state, React Query for server state

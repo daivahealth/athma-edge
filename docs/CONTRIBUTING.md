@@ -66,6 +66,6 @@ When you change something, update the correct doc family:
 | API endpoints, request/response | `docs/api/` |
 | Feature behavior, workflows | `docs/features/` |
 | Dev setup, commands, patterns | `docs/development/` |
-| Docker, nginx, n8n | `docs/deployment/` |
+| Docker, n8n | `docs/deployment/` |
 | Auth, RBAC, audit | `docs/security/` |
 | Ops procedures, troubleshooting | `docs/runbooks/` |
