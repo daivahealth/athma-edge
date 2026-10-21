@@ -10,7 +10,7 @@ During a cloud HIS outage, new patients may arrive at the hospital who don't exi
 
 ### Registration
 - Staff clicks "Add Patient" on the Patient Search page
-- Fills in demographics: name (required), gender, DOB, age, mobile, care setting (required, defaults to Emergency), ward, bed, consultant
+- Fills in demographics: name (required), gender, DOB, age, mobile, care setting (required, defaults to Outpatient), ward, bed, consultant
 - On submit, the system auto-generates a unique MRN in format `BCP-YYYYMMDD-NNN` (e.g., `BCP-20260520-001`)
 - Staff is redirected to the new patient's profile page
 
@@ -39,8 +39,8 @@ Temp patients have a reduced profile compared to synced patients:
 | Clinical Notes tab | Visible | Visible |
 | Stale data warning | Shown if >5min | Hidden |
 | Sync timestamps | Shown | Hidden |
-| "BCP Temporary" badge | Not shown | Shown (yellow) |
-| "TEMP" badge in search | Not shown | Shown next to MRN |
+| "BCP Temporary" badge | Not shown | Shown (orange) |
+| "TEMP" badge in search | Not shown | Shown next to MRN, solid orange |
 
 ### Edit Demographics
 - Only available for temp patients (`sourceSystem === 'BCP_LOCAL'`)

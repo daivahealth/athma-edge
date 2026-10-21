@@ -186,7 +186,7 @@ Notes can be written against any patient, synced or temporary, from the patient'
 
 ### 4. Register a walk-in
 
-Patients arriving during the outage will not be in the synced data. Register them with "Add Patient" on the patient search page: name and care setting are required (care setting defaults to Emergency), the rest — gender, date of birth, age, mobile, ward, bed, consultant — is optional. The system assigns an MRN of the form `BCP-YYYYMMDD-NNN`, and the patient appears in search with a yellow TEMP badge.
+Patients arriving during the outage will not be in the synced data. Register them with "Add Patient" on the patient search page: name and care setting are required (care setting defaults to Outpatient), the rest — gender, date of birth, age, mobile, ward, bed, consultant — is optional. The system assigns an MRN of the form `BCP-YYYYMMDD-NNN`, and the patient appears in search with an orange TEMP badge.
 
 Temporary patients carry demographics and clinical notes only — there are no vitals, medications, investigations or documents tabs, because there is no synced data behind them. Demographics can be corrected later; the record cannot be deleted.
 
