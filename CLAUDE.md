@@ -188,7 +188,7 @@ These rules are unique to the BCP edge application and must not be violated.
 | ORM | Prisma | ^6 |
 | Database | PostgreSQL | 16 |
 | Frontend | React + Vite (React Router) | React 18, Vite 5 |
-| UI | Radix UI + Tailwind CSS | Latest |
+| UI | Radix UI + Tailwind CSS | Tailwind 4 (CSS-first theme in `src/globals.css`) |
 | State | Zustand + React Query v5 | Latest |
 | Sync/ETL | n8n | Latest |
 | Deployment | Docker Compose | v2 |

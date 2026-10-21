@@ -52,7 +52,7 @@ n8n is reachable directly on port 5678 (admin only).
 - Any non-`/api/` GET falls back to `index.html`, so client-side routes resolve
 - Hashed assets under `/assets/` are cached for a year; `index.html` is never cached
 - React Router: `/login` is public, every other route sits under `MainLayout`, which runs the auth guard
-- Radix UI + Tailwind CSS for components
+- Radix UI + Tailwind CSS 4 for components, with design tokens shared with prr-app
 - Zustand for auth state, React Query for server state
 - Displays persistent BCP LOCAL MODE banner
 - Shows sync freshness on all patient views

@@ -7,7 +7,8 @@ import type { BcpNoteType } from '@/modules/clinical-notes/types';
 import { formatDateTime, timeAgo } from '@/lib/utils/formatters';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { ToneBadge } from '@/components/ui/tone-badge';
+import { NOTE_TYPE_TONE } from '@/lib/ui/tones';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { CreateNoteDialog } from '@/components/patients/create-note-dialog';
 
@@ -24,18 +25,6 @@ const NOTE_TYPE_LABELS: Record<BcpNoteType, string> = {
   OTHER: 'Other',
 };
 
-const NOTE_TYPE_VARIANT: Record<BcpNoteType, 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'> = {
-  ORDER: 'destructive',
-  MEDICATION: 'warning',
-  INVESTIGATION: 'default',
-  PROGRESS: 'default',
-  ASSESSMENT: 'secondary',
-  NURSING: 'success',
-  HANDOVER: 'warning',
-  INCIDENT: 'destructive',
-  COMMUNICATION: 'outline',
-  OTHER: 'outline',
-};
 
 export default function PatientNotesDetailPage() {
   // The route pattern cannot match without :mrn, but React Router
@@ -107,15 +96,13 @@ export default function PatientNotesDetailPage() {
               {notes.map((note) => (
                 <div key={note.id} className="rounded-lg border p-4">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <Badge variant={NOTE_TYPE_VARIANT[note.noteType]}>
+                    <ToneBadge tone={NOTE_TYPE_TONE[note.noteType]} withDot>
                       {NOTE_TYPE_LABELS[note.noteType]}
-                    </Badge>
+                    </ToneBadge>
                     <span className="text-sm font-medium">
                       {note.authorFullName || note.authorUsername}
                     </span>
-                    <Badge variant="outline" className="text-xs">
-                      {note.authorRole}
-                    </Badge>
+                    <ToneBadge tone="slate">{note.authorRole}</ToneBadge>
                     <span className="text-xs text-muted-foreground ml-auto" title={formatDateTime(note.createdAt)}>
                       {timeAgo(note.createdAt)}
                     </span>

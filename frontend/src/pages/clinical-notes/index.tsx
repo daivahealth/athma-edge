@@ -7,7 +7,8 @@ import { formatDateTime, timeAgo } from '@/lib/utils/formatters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { ToneBadge } from '@/components/ui/tone-badge';
+import { NOTE_TYPE_TONE } from '@/lib/ui/tones';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 const NOTE_TYPE_LABELS: Record<BcpNoteType, string> = {
@@ -23,18 +24,6 @@ const NOTE_TYPE_LABELS: Record<BcpNoteType, string> = {
   OTHER: 'Other',
 };
 
-const NOTE_TYPE_VARIANT: Record<BcpNoteType, 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'> = {
-  ORDER: 'destructive',
-  MEDICATION: 'warning',
-  INVESTIGATION: 'default',
-  PROGRESS: 'default',
-  ASSESSMENT: 'secondary',
-  NURSING: 'success',
-  HANDOVER: 'warning',
-  INCIDENT: 'destructive',
-  COMMUNICATION: 'outline',
-  OTHER: 'outline',
-};
 
 export default function ClinicalNotesListPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -165,18 +154,16 @@ export default function ClinicalNotesListPage() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {(note.totalNotes ?? 0) > 1 && (
-                              <Badge variant="secondary" className="text-[10px]">
-                                {note.totalNotes} notes
-                              </Badge>
+                              <ToneBadge tone="slate">{note.totalNotes} notes</ToneBadge>
                             )}
                             <ArrowRight className="h-4 w-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                           </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 mb-2.5">
-                          <Badge variant={NOTE_TYPE_VARIANT[note.noteType]} className="text-[11px]">
+                          <ToneBadge tone={NOTE_TYPE_TONE[note.noteType]} withDot>
                             {NOTE_TYPE_LABELS[note.noteType]}
-                          </Badge>
+                          </ToneBadge>
                           <span className="text-xs text-muted-foreground" title={formatDateTime(note.createdAt)}>
                             {timeAgo(note.createdAt)}
                           </span>

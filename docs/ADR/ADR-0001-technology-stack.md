@@ -17,7 +17,7 @@ Adopt the following technology stack:
 | ORM | Prisma ^6 | Same as athma-ce, type-safe database access |
 | Database | PostgreSQL 16 | Proven, handles JSONB well, single-server deployment |
 | Frontend | React 18 + Vite (React Router) | SPA served by the API as static files — see the 2026-10-21 amendments |
-| UI | Radix UI + Tailwind CSS | Same as athma-ce, accessible primitives |
+| UI | Radix UI + Tailwind CSS 4 | Accessible primitives; design tokens shared with prr-app — see the third 2026-10-21 amendment |
 | State | Zustand + React Query v5 | Same as athma-ce, lightweight state management |
 | Sync/ETL | n8n | Visual workflow builder, no-code sync management |
 | Proxy | None in the stack | Optional, and the hospital's own — see the second 2026-10-21 amendment |
@@ -90,3 +90,23 @@ So the deployment contract is now explicit: **Athma Edge speaks HTTP on one port
 - **No TLS without extra infrastructure.** On a flat hospital LAN that may be accepted; it is now a deliberate decision rather than a default, and it has to be made per deployment.
 - Static files are served by Node rather than nginx. At the peak this box is sized for — a whole hospital loading the bundle at once — that shares an event loop with API handling. Hashed assets are cached for a year, so it is a first-load cost, but it is a real one.
 - If the application process is down, nothing answers at all. Previously nginx could still return a page.
+
+## Third amendment, 2026-10-21: design tokens shared with prr-app, Tailwind 4
+
+Athma Edge now uses the prr-app design system, so the two products in the family read as one. Tailwind moved from 3 to 4 to make that port cheap.
+
+**What was shared:** 93 light and 84 dark design tokens from prr-app's `theme.css` — surfaces, the brand palette (primary `#bb4d00`), status-badge colours, chart colours, sidebar tokens, typography and radius — plus the collapsible sidebar. Geist replaces Inter, self-hosted through `@fontsource` for the same reason `next/font` was: an air-gapped edge box cannot reach Google Fonts at runtime.
+
+**What was not shared:** prr-app's page-specific tokens (referral, transaction, masters, worklist, calendar — 155 of its 248) describe screens Athma Edge does not have, and its `app-sidebar.tsx` is its own navigation.
+
+**Why Tailwind 4.** prr-app is on 4, where the theme lives in CSS (`@theme inline`) rather than a JS config. On 3 every ported component would have been hand-rewritten, and the next port would repeat the work. The upgrade was cheap here: 48 files, no Tailwind plugins, and a first-class Vite plugin. `tailwind.config.ts` and `postcss.config.js` are gone, the theme is in `src/globals.css`, and `package.json` gained `"type": "module"` because the Tailwind Vite plugin is ESM-only.
+
+**Primitives were not shared.** prr-app builds its `ui/` layer on Base UI; Athma Edge stays on Radix. The sidebar port keeps prr-app's structure and class names with Radix underneath — one primitive library beats two. The `sheet` and `tooltip` components are Radix equivalents of prr-app's.
+
+**A latent bug fixed in passing:** `animate-in` and `slide-in-from-*` were used in `dialog.tsx` with no plugin providing them, so those animations had never run. `tw-animate-css` now supplies them.
+
+### The cost
+
+- The BCP LOCAL MODE banner and the stale-data warning were re-checked against the new palette. They are patient-safety affordances, and a lighter, friendlier theme is exactly where such a warning quietly loses its urgency.
+- Athma Edge and prr-app share a visual identity but not a component library, so a change to prr-app's sidebar does not flow here automatically.
+- Tailwind 4 syntax differs enough from 3 that older Tailwind answers found online will not apply.

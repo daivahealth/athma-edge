@@ -1,47 +1,305 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+/* enter/exit utilities (animate-in, slide-in-from-*) used by dialog, sheet and tooltip */
+@import 'tw-animate-css';
+
+/*
+ * Design tokens ported from the prr-app design system, so the two products
+ * read as one family. Values are prrapp's; the token names follow the shadcn
+ * convention both projects already used.
+ *
+ * prrapp is on Tailwind v4 with a CSS-first theme, which is why this file
+ * carries the configuration that used to live in tailwind.config.ts.
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-auth-panel: hsl(var(--auth-panel));
+  --color-auth-link: hsl(var(--auth-link));
+  --color-login-title: hsl(var(--login-title));
+  --color-text-secondary: hsl(var(--text-secondary));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-required-asterisk: hsl(var(--required-asterisk));
+  --color-dashboard-content: hsl(var(--dashboard-content));
+  --color-dashboard-card: hsl(var(--dashboard-card));
+  --color-table-sticky-hover: hsl(var(--table-sticky-hover));
+  --color-breadcrumb-muted: hsl(var(--breadcrumb-muted));
+  --color-breadcrumb-current: hsl(var(--breadcrumb-current));
+  --color-table-head: hsl(var(--table-head));
+  --color-detail-label: hsl(var(--detail-label));
+  --color-detail-value: hsl(var(--detail-value));
+  --color-detail-description: hsl(var(--detail-description));
+  --color-status-active-bg: hsl(var(--status-active-bg));
+  --color-status-active-text: hsl(var(--status-active-text));
+  --color-status-active-dot: hsl(var(--status-active-dot));
+  --color-status-inactive-bg: hsl(var(--status-inactive-bg));
+  --color-status-inactive-text: hsl(var(--status-inactive-text));
+  --color-status-inactive-dot: hsl(var(--status-inactive-dot));
+  --color-status-success-bg: hsl(var(--status-success-bg));
+  --color-status-success-text: hsl(var(--status-success-text));
+  --color-status-success-dot: hsl(var(--status-success-dot));
+  --color-status-warning-bg: hsl(var(--status-warning-bg));
+  --color-status-warning-text: hsl(var(--status-warning-text));
+  --color-status-warning-dot: hsl(var(--status-warning-dot));
+  --color-status-error-bg: hsl(var(--status-error-bg));
+  --color-status-error-text: hsl(var(--status-error-text));
+  --color-status-error-dot: hsl(var(--status-error-dot));
+  --color-status-info-bg: hsl(var(--status-info-bg));
+  --color-status-info-text: hsl(var(--status-info-text));
+  --color-status-info-dot: hsl(var(--status-info-dot));
+  --color-status-neutral-bg: hsl(var(--status-neutral-bg));
+  --color-status-neutral-text: hsl(var(--status-neutral-text));
+  --color-status-neutral-dot: hsl(var(--status-neutral-dot));
+  --color-status-pathway-bg: hsl(var(--status-pathway-bg));
+  --color-status-pathway-text: hsl(var(--status-pathway-text));
+  --color-status-pathway-dot: hsl(var(--status-pathway-dot));
+  --color-status-new-bg: hsl(var(--status-new-bg));
+  --color-status-new-text: hsl(var(--status-new-text));
+  --color-status-new-dot: hsl(var(--status-new-dot));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-menu-label: hsl(var(--sidebar-menu-label));
+  --color-sidebar-menu-item: hsl(var(--sidebar-menu-item));
+  --color-sidebar-menu-active: hsl(var(--sidebar-menu-active));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-footer: hsl(var(--sidebar-footer));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 224 30% 14%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 224 30% 14%;
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 30% 14%;
-    --primary: 217 72% 46%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 24.7 100% 36.7%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 16% 93%;
-    --secondary-foreground: 224 20% 22%;
-    --muted: 220 16% 93%;
-    --muted-foreground: 220 10% 46%;
-    --accent: 220 16% 93%;
-    --accent-foreground: 224 20% 22%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 16% 90%;
-    --input: 220 16% 87%;
-    --ring: 217 72% 46%;
-    --radius: 0.625rem;
-    --sidebar: 224 30% 18%;
-    --sidebar-foreground: 220 16% 90%;
-    --sidebar-muted: 224 24% 24%;
-    --sidebar-accent: 217 72% 46%;
+    --auth-panel: 0 0% 4%;
+    --auth-link: 221.2 83.2% 53.3%;
+    --login-title: 0 0% 3.92%;
+    --text-secondary: 0 0% 0% / 0.651;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --required-asterisk: 0 84.2% 60.2%;
+    --dashboard-content: 0 0% 100%;
+    --dashboard-card: 220 13% 91%;
+    --table-sticky-hover: 210 33% 94%;
+    --breadcrumb-muted: 0 0% 45.1%;
+    --breadcrumb-current: 0 0% 0%;
+    --table-head: 0 0% 45.1%;
+    --detail-label: 0 0% 45.1%;
+    --detail-value: 217.2 32.6% 17.5%;
+    --detail-description: 217.2 32.6% 17.5%;
+    --status-badge-radius: 9999px;
+    --status-badge-padding-y: 0.125rem;
+    --status-badge-padding-x: 0.625rem;
+    --status-badge-font-size: 0.75rem;
+    --status-badge-font-weight: 400;
+    --status-badge-line-height: 1.2;
+    --status-badge-gap: 0.25rem;
+    --status-badge-dot-size: 0.375rem;
+    --status-badge-soft-radius: 0.5rem;
+    --status-badge-soft-padding-y: 0.125rem;
+    --status-badge-soft-padding-x: 0.5rem;
+    --status-badge-soft-font-size: 0.625rem;
+    --status-badge-soft-font-weight: 600;
+    --status-badge-soft-line-height: 1.5;
+    --status-active-bg: 152 81% 96%;
+    --status-active-text: 142 72% 29%;
+    --status-active-dot: 142 72% 29%;
+    --status-inactive-bg: 0 0% 96%;
+    --status-inactive-text: 0 0% 45%;
+    --status-inactive-dot: 0 0% 45%;
+    --status-success-bg: 152 81% 96%;
+    --status-success-text: 162 100% 24%;
+    --status-success-dot: 160 100% 37%;
+    --status-warning-bg: 48 100% 96%;
+    --status-warning-text: 24.7 100% 36.7%;
+    --status-warning-dot: 36 100% 50%;
+    --status-error-bg: 0 86% 97%;
+    --status-error-text: 0 100% 45%;
+    --status-error-dot: 0 96% 58%;
+    --status-info-bg: 214 100% 97%;
+    --status-info-text: 221 98% 53%;
+    --status-info-dot: 210 100% 66%;
+    --status-neutral-bg: 0 0% 96%;
+    --status-neutral-text: 0 0% 45%;
+    --status-neutral-dot: 0 0% 45%;
+    --status-pathway-bg: 24.7 100% 36.7% / 0.1;
+    --status-pathway-text: 24.7 100% 36.7%;
+    --status-pathway-dot: 24.7 100% 36.7%;
+    --status-new-bg: 255 100% 97%;
+    --status-new-text: 262 97% 56%;
+    --status-new-dot: 262 100% 66%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 250 65% 54%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --sidebar: 0 0% 98.04%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-menu-label: 0 0% 0% / 0.698;
+    --sidebar-menu-item: 0 0% 0%;
+    --sidebar-menu-active: 240 6% 90.6%;
+    --sidebar-primary: 24.7 100% 36.7%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 6% 90.6%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: oklch(0.9 0.012 247.896);
+    --sidebar-footer: 0 0% 96.1%;
+    --sidebar-ring: 24.7 100% 36.7%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 24.7 100% 36.7%;
+    --input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.051);
+    --radius: 8px;
+  }
+
+  .dark {
+    --background: 217 47% 11%;
+    --foreground: 216 55% 94%;
+    --card: 219 47% 11%;
+    --card-foreground: 216 55% 94%;
+    --popover: 219 47% 11%;
+    --popover-foreground: 216 55% 94%;
+    --primary: 24.7 100% 55%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 216 46% 16%;
+    --secondary-foreground: 216 55% 94%;
+    --muted: 217 49% 12%;
+    --muted-foreground: 217 23% 68%;
+    --required-asterisk: 0 84.2% 60.2%;
+    --login-title: 210 40% 98%;
+    --text-secondary: 215 20.2% 65.1% / 1;
+    --breadcrumb-muted: 217 23% 68%;
+    --breadcrumb-current: 216 55% 94%;
+    --table-head: 216 55% 94%;
+    --detail-label: 217 23% 68%;
+    --detail-value: 216 55% 94%;
+    --detail-description: 216 55% 94%;
+    --status-badge-radius: 9999px;
+    --status-badge-padding-y: 0.125rem;
+    --status-badge-padding-x: 0.625rem;
+    --status-badge-font-size: 0.75rem;
+    --status-badge-font-weight: 400;
+    --status-badge-line-height: 1.2;
+    --status-badge-gap: 0.25rem;
+    --status-badge-dot-size: 0.375rem;
+    --status-badge-soft-radius: 0.5rem;
+    --status-badge-soft-padding-y: 0.125rem;
+    --status-badge-soft-padding-x: 0.5rem;
+    --status-badge-soft-font-size: 0.625rem;
+    --status-badge-soft-font-weight: 600;
+    --status-badge-soft-line-height: 1.5;
+    --status-active-bg: 142 50% 15%;
+    --status-active-text: 152 70% 72%;
+    --status-active-dot: 152 70% 72%;
+    --status-inactive-bg: 217 49% 12%;
+    --status-inactive-text: 217 23% 68%;
+    --status-inactive-dot: 217 23% 68%;
+    --status-success-bg: 142 50% 15%;
+    --status-success-text: 152 70% 72%;
+    --status-success-dot: 152 70% 72%;
+    --status-warning-bg: 32 55% 18%;
+    --status-warning-text: 24.7 100% 55%;
+    --status-warning-dot: 36 100% 55%;
+    --status-error-bg: 0 45% 18%;
+    --status-error-text: 0 93% 82%;
+    --status-error-dot: 0 93% 82%;
+    --status-info-bg: 221 45% 18%;
+    --status-info-text: 214 95% 82%;
+    --status-info-dot: 214 95% 82%;
+    --status-neutral-bg: 217 49% 12%;
+    --status-neutral-text: 217 23% 68%;
+    --status-neutral-dot: 217 23% 68%;
+    --status-pathway-bg: 24.7 100% 55% / 0.15;
+    --status-pathway-text: 24.7 100% 55%;
+    --status-pathway-dot: 24.7 100% 55%;
+    --status-new-bg: 262 45% 18%;
+    --status-new-text: 262 90% 78%;
+    --status-new-dot: 262 90% 78%;
+    --accent: 218 45% 19%;
+    --accent-foreground: 216 55% 94%;
+    --dashboard-content: 217 47% 11%;
+    --dashboard-card: 219 47% 11%;
+    --table-sticky-hover: 218 45% 19%;
+    --border: 220 36% 22%;
+    --input: 220 36% 22%;
+    --ring: 24.7 100% 55%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 250 70% 68%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar: 220 49% 8%;
+    --sidebar-foreground: 216 55% 94%;
+    --sidebar-primary: 24.7 100% 55%;
+    --sidebar-primary-foreground: 222.2 84% 4.9%;
+    --sidebar-accent: 218 45% 19%;
+    --sidebar-accent-foreground: 216 55% 94%;
+    --sidebar-border: hsl(220 36% 22%);
+    --sidebar-footer: 220 49% 8%;
+    --sidebar-ring: 24.7 100% 55%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
+
   body {
-    @apply bg-background text-foreground antialiased;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+@utility text-balance {
+  text-wrap: balance;
 }

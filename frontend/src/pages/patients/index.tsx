@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { ToneBadge } from '@/components/ui/tone-badge';
+import { CARE_SETTING_TONE } from '@/lib/ui/tones';
 
 export default function PatientSearchPage() {
   const [params, setParams] = useState<PatientSearchParams>({
@@ -120,7 +121,7 @@ export default function PatientSearchPage() {
                             {patient.mrn}
                           </Link>
                           {(patient as any).sourceSystem === BCP_LOCAL_SOURCE && (
-                            <Badge variant="warning" className="ml-2 text-[10px]">TEMP</Badge>
+                            <ToneBadge tone="orange" strong className="ml-2">TEMP</ToneBadge>
                           )}
                         </td>
                         <td className="px-4 py-3 font-medium">{patient.patientName}</td>
@@ -128,9 +129,9 @@ export default function PatientSearchPage() {
                           {[patient.age, patient.gender].filter(Boolean).join(' / ') || '—'}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="secondary">
+                          <ToneBadge tone={CARE_SETTING_TONE[patient.careSetting] ?? 'slate'} withDot>
                             {CARE_SETTING_LABELS[patient.careSetting as keyof typeof CARE_SETTING_LABELS] || patient.careSetting}
-                          </Badge>
+                          </ToneBadge>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {patient.wardName || '—'}
@@ -138,9 +139,9 @@ export default function PatientSearchPage() {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{patient.consultantName || '—'}</td>
                         <td className="px-4 py-3">
-                          <Badge variant={patient.isActive ? 'success' : 'outline'}>
+                          <ToneBadge tone={patient.isActive ? 'green' : 'slate'} withDot>
                             {patient.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
+                          </ToneBadge>
                         </td>
                         <td className={`px-4 py-3 text-xs ${syncAgeColor(patient.lastSyncedAt)}`}>
                           {timeAgo(patient.lastSyncedAt)}
