@@ -38,7 +38,7 @@ export class AuditInterceptor implements NestInterceptor {
     }
 
     return next.handle().pipe(
-      tap(() => {
+      tap((response) => {
         const additionalData: Record<string, any> = {};
 
         if (eventType === 'PATIENT_SEARCHED') {
@@ -52,11 +52,19 @@ export class AuditInterceptor implements NestInterceptor {
           additionalData.noteType = request.body?.noteType || null;
         }
 
+        // A login request is unauthenticated, so request.user does not exist
+        // yet and reading the username from it records an empty actor — the
+        // one field an audit trail of patient-data access cannot afford to
+        // lose. The login response carries the authenticated user, which is
+        // the only authoritative source for the username and role at this
+        // point; the submitted username is the fallback.
+        const authenticatedUser = eventType === 'LOGIN_SUCCESS' ? response?.data?.user : null;
+
         this.logAudit(
-          tenantId,
+          authenticatedUser?.tenantId || tenantId,
           eventType,
-          user?.username,
-          user?.roles?.[0] || null,
+          authenticatedUser?.username || user?.username || request.body?.username || null,
+          authenticatedUser?.roles?.[0] || user?.roles?.[0] || null,
           ip,
           mrn,
           Object.keys(additionalData).length > 0 ? additionalData : null,
