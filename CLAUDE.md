@@ -102,7 +102,7 @@ athma-edge/
 │       ├── common/         # Guards, decorators, filters, interceptors, middleware
 │       ├── database/       # PrismaService and PrismaModule
 │       └── modules/        # Feature modules (auth, user, patient, clinical-profile, clinical-note, document, sync-status, audit, health)
-├── frontend/               # Next.js 14 App Router application
+├── frontend/               # Vite + React Router single-page application
 │   └── src/
 │       ├── app/            # Route pages and layouts
 │       ├── components/     # UI primitives, layout, feature components
@@ -187,7 +187,7 @@ These rules are unique to the BCP edge application and must not be violated.
 | Backend | NestJS | ^10 |
 | ORM | Prisma | ^6 |
 | Database | PostgreSQL | 16 |
-| Frontend | Next.js (App Router) | 14 |
+| Frontend | React + Vite (React Router) | React 18, Vite 5 |
 | UI | Radix UI + Tailwind CSS | Latest |
 | State | Zustand + React Query v5 | Latest |
 | Sync/ETL | n8n | Latest |

@@ -56,19 +56,28 @@ Global `ValidationPipe` with `transform: true, whitelist: true, forbidNonWhiteli
 
 Global `GlobalExceptionFilter` catches all exceptions and returns structured error responses (see [API Response Formats](../api/API-RESPONSE-FORMATS.md)).
 
-## Frontend (Next.js 14)
+## Frontend (React + Vite)
 
-### App Router Layout
+### Route Layout
+
+Routes are declared in one place, `src/router.tsx`, rather than inferred from the
+filesystem. `MainLayout` wraps every authenticated route and runs the auth guard,
+so a new page is protected by where it is registered, not by what it remembers to call.
 
 ```
-app/
-  (auth)/          # Unauthenticated routes (login)
-    layout.tsx     # Centered card layout, no sidebar
-  (main)/          # Authenticated routes
-    layout.tsx     # Sidebar + topbar + BCP banner + auth guard
-    patients/      # Patient pages
-    admin/         # Admin pages (role-guarded)
+src/
+  main.tsx         # React root: QueryProvider + RouterProvider
+  router.tsx       # Every route, in one file
+  pages/
+    login.tsx      # Public
+    patients/      # index.tsx, detail.tsx  (/patients, /patients/:mrn)
+    clinical-notes/# index.tsx, new.tsx, detail.tsx
+    admin/         # sync.tsx, users.tsx, audit.tsx  (role-guarded)
+  components/layout/main-layout.tsx   # Sidebar + BCP banner + auth guard + <Outlet/>
 ```
+
+Adding a route means adding a file under `pages/` and a line in `router.tsx`.
+Put it in the `MainLayout` children array unless it is genuinely public.
 
 ### Component Organization
 

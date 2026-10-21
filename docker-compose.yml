@@ -38,16 +38,6 @@ services:
       postgres:
         condition: service_healthy
 
-  bcp-ui:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      NEXT_PUBLIC_API_URL: http://bcp-api:3100
-    depends_on:
-      - bcp-api
-
   n8n:
     image: n8nio/n8n:latest
     restart: unless-stopped
@@ -73,8 +63,12 @@ services:
       postgres:
         condition: service_healthy
 
+  # Serves the built SPA directly and proxies /api to bcp-api. There is no
+  # separate UI container since the frontend moved from Next.js to Vite.
   nginx:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
     restart: unless-stopped
     ports:
       - '80:80'
@@ -82,7 +76,6 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - bcp-api
-      - bcp-ui
 
 volumes:
   postgres_data:

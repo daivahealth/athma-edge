@@ -91,7 +91,7 @@ athma-edge/
 ├── backend/          # NestJS API (single service)
 │   ├── prisma/       # Schema, migrations, seed
 │   └── src/          # Application source
-├── frontend/         # Next.js 14 UI
+├── frontend/         # React + Vite SPA
 │   └── src/          # Application source
 ├── docs/             # Documentation
 ├── nginx/            # Reverse proxy config

@@ -1,11 +1,9 @@
-'use client';
-
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
 export function useAuthGuard() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { user, hydrated, hydrate } = useAuthStore();
 
   useEffect(() => {
@@ -14,22 +12,22 @@ export function useAuthGuard() {
 
   useEffect(() => {
     if (hydrated && !user) {
-      router.replace('/login');
+      navigate('/login', { replace: true });
     }
-  }, [hydrated, user, router]);
+  }, [hydrated, user, navigate]);
 
   return { user, isAuthenticated: hydrated && !!user, isLoading: !hydrated };
 }
 
 export function useRoleGuard(requiredRoles: string[]) {
   const { user } = useAuthGuard();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user && !user.roles.some((r) => requiredRoles.includes(r))) {
-      router.replace('/patients');
+      navigate('/patients', { replace: true });
     }
-  }, [user, requiredRoles, router]);
+  }, [user, requiredRoles, navigate]);
 
   return { user, hasAccess: user?.roles.some((r) => requiredRoles.includes(r)) ?? false };
 }

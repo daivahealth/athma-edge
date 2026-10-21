@@ -58,16 +58,16 @@ cd frontend
 # Install dependencies
 npm install
 
-# Start dev server
+# Start dev server (Vite on :3000, proxies /api to localhost:3100)
 npm run dev
 
-# Build for production
+# Typecheck, then build static files into dist/
 npm run build
 
-# Start production server
-npm run start
+# Serve the built dist/ locally, to check it as nginx will
+npm run preview
 
-# Lint
+# Typecheck only
 npm run lint
 ```
 
@@ -92,7 +92,7 @@ docker compose exec postgres psql -U bcp_user -d bcp_db
 
 # Rebuild after code changes
 docker compose up -d --build bcp-api
-docker compose up -d --build bcp-ui
+docker compose up -d --build nginx   # rebuilds the SPA and the proxy
 
 # Full restart
 docker compose down && docker compose up -d

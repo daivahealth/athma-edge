@@ -1,5 +1,3 @@
-'use client';
-
 import { AlertTriangle } from 'lucide-react';
 import { useSyncStatus } from '@/modules/sync/hooks';
 import { cn } from '@/lib/utils/cn';

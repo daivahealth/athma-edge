@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useUpdateTempPatient } from '@/modules/patients/hooks';
 import { CARE_SETTINGS, CARE_SETTING_LABELS } from '@/lib/utils/constants';

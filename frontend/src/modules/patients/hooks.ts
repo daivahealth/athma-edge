@@ -1,5 +1,3 @@
-'use client';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { patientService } from './services';
 import type { PatientSearchParams, CreateTempPatientRequest, UpdateTempPatientRequest } from './types';

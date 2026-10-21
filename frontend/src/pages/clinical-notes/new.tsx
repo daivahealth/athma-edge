@@ -1,8 +1,5 @@
-'use client';
-
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { ArrowLeft, Loader2, Search } from 'lucide-react';
 import { usePatientSearch } from '@/modules/patients/hooks';
 import { useCreateClinicalNote } from '@/modules/clinical-notes/hooks';
@@ -31,7 +28,7 @@ const NOTE_TYPE_LABELS: Record<BcpNoteType, string> = {
 const MAX_CONTENT_LENGTH = 5000;
 
 export default function CreateClinicalNotePage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMrn, setSelectedMrn] = useState<string | null>(null);
   const [selectedPatientName, setSelectedPatientName] = useState('');
@@ -67,7 +64,7 @@ export default function CreateClinicalNotePage() {
       { noteType: noteType as BcpNoteType, content: content.trim() },
       {
         onSuccess: () => {
-          router.push('/clinical-notes');
+          navigate('/clinical-notes');
         },
       },
     );
@@ -76,7 +73,7 @@ export default function CreateClinicalNotePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/clinical-notes" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+        <Link to="/clinical-notes" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" /> Back to Notes
         </Link>
         <h1 className="text-2xl font-bold">Create Clinical Note</h1>
@@ -194,7 +191,7 @@ export default function CreateClinicalNotePage() {
             )}
 
             <div className="flex justify-end gap-2 pt-2">
-              <Link href="/clinical-notes">
+              <Link to="/clinical-notes">
                 <Button variant="outline">Cancel</Button>
               </Link>
               <Button onClick={handleSubmit} disabled={!canSubmit || mutation.isPending}>

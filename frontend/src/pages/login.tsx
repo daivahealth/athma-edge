@@ -1,15 +1,13 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useNavigate } from 'react-router-dom';
+
 import { AlertTriangle } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { authService } from '@/modules/auth/services';
 import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +22,7 @@ export default function LoginPage() {
     try {
       const response = await authService.login({ username, password });
       setAuth(response.data.user);
-      router.replace('/patients');
+      navigate('/patients', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Check your credentials.');
     } finally {
@@ -43,7 +41,7 @@ export default function LoginPage() {
         <div className="rounded-xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-sm">
           <div className="mb-8 flex flex-col items-center gap-2">
             <div className="flex items-center gap-2.5">
-              <Image src="/athma-mark.svg" alt="Athma" width={32} height={32} className="brightness-0 invert" />
+              <img src="/athma-mark.svg" alt="Athma" width={32} height={32} className="brightness-0 invert" />
               <div>
                 <p className="text-lg font-bold tracking-wide text-white">edge</p>
                 <p className="text-[10px] uppercase tracking-widest text-white/40">BCP Console</p>

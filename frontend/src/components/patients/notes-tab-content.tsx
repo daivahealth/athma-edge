@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { Plus, StickyNote } from 'lucide-react';
 import { useClinicalNotes } from '@/modules/clinical-notes/hooks';

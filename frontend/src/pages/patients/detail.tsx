@@ -1,8 +1,5 @@
-'use client';
-
+import { Link, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { ArrowLeft, FileDown, Loader2, Pencil } from 'lucide-react';
 import { useClinicalProfile } from '@/modules/patients/hooks';
 import { patientService } from '@/modules/patients/services';
@@ -17,7 +14,9 @@ import { NotesTabContent } from '@/components/patients/notes-tab-content';
 import { EditDemographicsDialog } from '@/components/patients/edit-demographics-dialog';
 
 export default function ClinicalProfilePage() {
-  const { mrn } = useParams<{ mrn: string }>();
+  // The route pattern cannot match without :mrn, but React Router
+  // still types params as optional.
+  const mrn = useParams<{ mrn: string }>().mrn!;
   const { data, isLoading, error } = useClinicalProfile(mrn);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -46,7 +45,7 @@ export default function ClinicalProfilePage() {
   if (error || !data) {
     return (
       <div className="space-y-4">
-        <Link href="/patients" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+        <Link to="/patients" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" /> Back to search
         </Link>
         <p className="text-destructive">Failed to load patient profile.</p>
@@ -61,7 +60,7 @@ export default function ClinicalProfilePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/patients" className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
+        <Link to="/patients" className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight">{patient.patientName}</h1>
