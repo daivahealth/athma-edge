@@ -226,26 +226,57 @@ function InfoItem({ label, value }: { label: string; value: string | null | unde
   );
 }
 
-function VitalsDisplay({ data }: { data: Record<string, any> | null | undefined }) {
-  if (!data || Object.keys(data).length === 0) {
+type VitalsRecord = Record<string, string | number | null | undefined> & { recordedAt?: string };
+
+// Older synced profiles may still store a single flat object instead of an array of snapshots.
+function normalizeVitalsRecords(data: VitalsRecord[] | Record<string, any> | null | undefined): VitalsRecord[] {
+  if (!data) return [];
+  return Array.isArray(data) ? data : [data];
+}
+
+function VitalsDisplay({ data }: { data: VitalsRecord[] | Record<string, any> | null | undefined }) {
+  const records = normalizeVitalsRecords(data);
+
+  if (records.length === 0) {
     return <p className="py-4 text-center text-muted-foreground">No vitals data available.</p>;
   }
 
-  const { recordedAt, ...vitals } = data;
+  const sorted = [...records].sort(
+    (a, b) => new Date(b.recordedAt ?? 0).getTime() - new Date(a.recordedAt ?? 0).getTime(),
+  );
+
+  const parameters: string[] = [];
+  for (const record of sorted) {
+    for (const key of Object.keys(record)) {
+      if (key === 'recordedAt' || parameters.includes(key)) continue;
+      parameters.push(key);
+    }
+  }
 
   return (
-    <div className="space-y-3">
-      {recordedAt && (
-        <p className="text-xs text-muted-foreground">Recorded: {formatDateTime(recordedAt)}</p>
-      )}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {Object.entries(vitals).map(([key, value]) => (
-          <div key={key} className="rounded-lg border bg-muted/40 px-3.5 py-2.5">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}</p>
-            <p className="mt-0.5 text-sm font-semibold">{String(value)}</p>
-          </div>
-        ))}
-      </div>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b bg-muted/30 text-left">
+            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Parameter</th>
+            {sorted.map((record, i) => (
+              <th key={i} className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {formatDateTime(record.recordedAt ?? null)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {parameters.map((param) => (
+            <tr key={param} className="transition-colors hover:bg-muted/40">
+              <td className="px-4 py-3 font-medium">{param}</td>
+              {sorted.map((record, i) => (
+                <td key={i} className="px-4 py-3">{record[param] ?? '—'}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -256,28 +287,26 @@ function MedicationTable({ data }: { data: any[] | null | undefined }) {
   }
 
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b bg-muted/30 text-left">
-          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Medication</th>
-          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dose</th>
-          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Route</th>
-          <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Frequency</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((med, i) => (
-          <tr key={i} className="border-b last:border-0 transition-colors hover:bg-muted/40">
-            <td className="px-4 py-3 font-medium">{med.name || '—'}</td>
-            <td className="px-4 py-3">{med.dose || '—'}</td>
-            <td className="px-4 py-3">
-              <Badge variant="secondary">{med.route || '—'}</Badge>
-            </td>
-            <td className="px-4 py-3">{med.frequency || '—'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {data.map((med, i) => (
+        <div key={i} className="rounded-lg border p-4">
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-medium leading-snug">{med.name || '—'}</p>
+            {med.drugForm && <Badge variant="secondary" className="shrink-0">{med.drugForm}</Badge>}
+          </div>
+          {med.mode && (
+            <Badge variant="outline" className="mt-2 text-xs">{med.mode}</Badge>
+          )}
+          <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
+            <InfoItem label="Dose" value={med.dose} />
+            <InfoItem label="Route" value={med.route} />
+            <InfoItem label="Frequency" value={med.frequency} />
+            <InfoItem label="Start Date" value={med.startDate ? formatDate(med.startDate) : null} />
+            <InfoItem label="End Date" value={med.endDate ? formatDate(med.endDate) : null} />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
