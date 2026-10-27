@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { PatientModule } from './modules/patient/patient.module';
 import { ClinicalProfileModule } from './modules/clinical-profile/clinical-profile.module';
+import { ClinicalSummaryModule } from './modules/clinical-summary/clinical-summary.module';
 import { DocumentModule } from './modules/document/document.module';
 import { SyncStatusModule } from './modules/sync-status/sync-status.module';
 import { AuditModule } from './modules/audit/audit.module';
@@ -23,6 +24,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     UserModule,
     PatientModule,
     ClinicalProfileModule,
+    ClinicalSummaryModule,
     DocumentModule,
     SyncStatusModule,
     AuditModule,

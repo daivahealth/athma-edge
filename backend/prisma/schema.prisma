@@ -182,6 +182,47 @@ model BcpPatientPdfDocument {
   @@map("bcp_patient_pdf_document")
 }
 
+// ─── bcp_patient_clinical_summary ────────────────────────────────────────────
+
+model BcpPatientClinicalSummary {
+  id                 BigInt       @id @default(autoincrement())
+  tenantId           String       @map("tenant_id") @db.VarChar(100)
+  sourceSystem       String       @map("source_system") @db.VarChar(100)
+  patientId          String?      @map("patient_id") @db.VarChar(100)
+  mrn                String       @db.VarChar(50)
+  encounterId        String?      @map("encounter_id") @db.VarChar(100)
+  visitNumber        String?      @map("visit_number") @db.VarChar(50)
+  patientName        String       @map("patient_name") @db.VarChar(255)
+  dateOfBirth        DateTime?    @map("date_of_birth") @db.Date
+  age                String?      @db.VarChar(20)
+  gender             String?      @db.VarChar(20)
+  businessDate       DateTime     @map("business_date") @db.Date
+  unitName           String?      @map("unit_name") @db.VarChar(100)
+  wardName           String?      @map("ward_name") @db.VarChar(100)
+  bedNumber          String?      @map("bed_number") @db.VarChar(50)
+  consultantName     String?      @map("consultant_name") @db.VarChar(255)
+  admissionDatetime  DateTime?    @map("admission_datetime") @db.Timestamp(6)
+  visitStartDatetime DateTime?    @map("visit_start_datetime") @db.Timestamp(6)
+  clinicalSummary    Json?        @map("clinical_summary")
+  documentType       DocumentType @map("document_type")
+  documentName       String?      @map("document_name") @db.VarChar(255)
+  filePath           String       @map("file_path") @db.Text
+  mimeType           String       @default("application/pdf") @map("mime_type") @db.VarChar(100)
+  documentDatetime   DateTime?    @map("document_datetime") @db.Timestamp(6)
+  fileSize           BigInt?      @map("file_size")
+  checksum           String?      @db.VarChar(255)
+  lastSeenInSourceAt DateTime?    @map("last_seen_in_source_at") @db.Timestamp(6)
+  lastSyncedAt       DateTime     @map("last_synced_at") @db.Timestamp(6)
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([mrn], name: "idx_clinical_summary_mrn")
+  @@index([encounterId], name: "idx_clinical_summary_encounter_id")
+  @@index([documentType], name: "idx_clinical_summary_document_type")
+  @@index([businessDate], name: "idx_clinical_summary_business_date")
+  @@map("bcp_patient_clinical_summary")
+}
+
 // ─── bcp_sync_status ─────────────────────────────────────────────────────────
 
 model BcpSyncStatus {

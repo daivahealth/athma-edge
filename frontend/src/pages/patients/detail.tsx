@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { ArrowLeft, FileDown, Loader2, Pencil } from 'lucide-react';
+import { ArrowLeft, FileDown, Loader2, Pencil, Printer } from 'lucide-react';
 import { useClinicalProfile } from '@/modules/patients/hooks';
 import { patientService } from '@/modules/patients/services';
 import { formatDateTime, formatDate, syncAgeColor, timeAgo } from '@/lib/utils/formatters';
@@ -19,6 +19,7 @@ export default function ClinicalProfilePage() {
   const mrn = useParams<{ mrn: string }>().mrn!;
   const { data, isLoading, error } = useClinicalProfile(mrn);
   const [editOpen, setEditOpen] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   const handleDownload = async (documentId: number, documentName: string) => {
     try {
@@ -31,6 +32,23 @@ export default function ClinicalProfilePage() {
       URL.revokeObjectURL(url);
     } catch {
       alert('Failed to download document.');
+    }
+  };
+
+  const handlePrintSummary = async () => {
+    setPrinting(true);
+    try {
+      const response = await patientService.downloadClinicalSummaryPdf(mrn);
+      const url = URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${mrn}-24h-clinical-summary.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Failed to generate clinical summary PDF.');
+    } finally {
+      setPrinting(false);
     }
   };
 
@@ -69,6 +87,19 @@ export default function ClinicalProfilePage() {
         </Badge>
         {isTempPatient && (
           <Badge variant="warning">BCP Temporary</Badge>
+        )}
+        {!isTempPatient && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto"
+            onClick={handlePrintSummary}
+            disabled={printing}
+            title="Print 24-hour clinical summary"
+          >
+            {printing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Printer className="mr-1.5 h-3.5 w-3.5" />}
+            Print Summary
+          </Button>
         )}
       </div>
 

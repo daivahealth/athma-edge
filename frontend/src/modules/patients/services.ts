@@ -17,6 +17,9 @@ export const patientService = {
   downloadDocument: (documentId: number) =>
     apiClient.get(`/bcp/documents/${documentId}/download`, { responseType: 'blob' }).then((r) => r),
 
+  downloadClinicalSummaryPdf: (mrn: string) =>
+    apiClient.get(`/bcp/patients/${mrn}/clinical-summary/pdf`, { responseType: 'blob' }).then((r) => r),
+
   createTempPatient: (data: CreateTempPatientRequest) =>
     apiClient.post<{ data: any }>('/bcp/patients/register-temp', data).then((r) => r.data.data),
 

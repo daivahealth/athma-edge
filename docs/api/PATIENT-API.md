@@ -141,6 +141,39 @@ Patient search, clinical profile, and temporary patient registration endpoints.
 
 ---
 
+## GET /api/bcp/patients/:mrn/clinical-summary/pdf
+
+Generates and downloads a printable 24-hour clinical summary PDF, built from the latest `bcp_patient_clinical_summary` row synced for the patient.
+
+**Auth:** Required
+**Roles:** DOCTOR, NURSE, ADMIN
+
+### Path Parameters
+
+| Param | Type | Description |
+|-------|------|-------------|
+| mrn | string | Medical Record Number |
+
+### Response (200)
+
+Binary PDF file stream with headers:
+- `Content-Type: application/pdf`
+- `Content-Disposition: attachment; filename="<mrn>-24h-clinical-summary.pdf"`
+
+### Errors
+
+| Status | Condition |
+|--------|-----------|
+| 404 | No clinical summary synced for the given MRN |
+
+### Notes
+
+- The PDF is generated on-demand from the `clinical_summary` JSONB payload (progress/nursing note summaries, allergies, vitals, lab results, intake/output, pending investigations, active medications) plus the row's own demographic/encounter columns
+- Audit event `PDF_VIEWED` is logged with the MRN (same event type used for synced PDF document downloads)
+- Not available for BCP temporary patients, since clinical summaries are only produced by the HIS sync pipeline
+
+---
+
 ## POST /api/bcp/patients/register-temp
 
 Register a new temporary (walk-in) patient during BCP.

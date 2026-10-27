@@ -26,6 +26,7 @@ The `AuditInterceptor` (NestJS global interceptor) automatically logs events bas
 | GET /api/bcp/patients/search | PATIENT_SEARCHED | — |
 | GET /api/bcp/patients/:mrn/profile | PATIENT_VIEWED | — |
 | GET /api/bcp/documents/:id/download | PDF_VIEWED | — |
+| GET /api/bcp/patients/:mrn/clinical-summary/pdf | PDF_VIEWED | — |
 | POST /api/bcp/patients/:mrn/notes | BCP_NOTE_CREATED | — |
 | POST /api/bcp/patients/register-temp | TEMP_PATIENT_CREATED | — |
 | PATCH /api/bcp/patients/:mrn/demographics | TEMP_PATIENT_UPDATED | — |

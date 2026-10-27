@@ -135,6 +135,51 @@ Metadata for locally stored PDF documents. Binary content is on the filesystem, 
 
 ---
 
+### bcp_patient_clinical_summary
+
+Synced, print-ready 24-hour clinical summary per patient. Dedicated demographic/encounter columns back the printed header; `clinical_summary` holds the rest (note summaries, vitals, labs, I/O, investigations, medications) as produced by the HIS sync pipeline.
+
+| Column | Type | Nullable | Default | Notes |
+|--------|------|----------|---------|-------|
+| id | BIGSERIAL | NO | auto | PK |
+| tenant_id | VARCHAR(100) | NO | | |
+| source_system | VARCHAR(100) | NO | | |
+| patient_id | VARCHAR(100) | YES | | |
+| mrn | VARCHAR(50) | NO | | |
+| encounter_id | VARCHAR(100) | YES | | |
+| visit_number | VARCHAR(50) | YES | | |
+| patient_name | VARCHAR(255) | NO | | |
+| date_of_birth | DATE | YES | | |
+| age | VARCHAR(20) | YES | | |
+| gender | VARCHAR(20) | YES | | |
+| business_date | DATE | NO | | |
+| unit_name | VARCHAR(100) | YES | | |
+| ward_name | VARCHAR(100) | YES | | |
+| bed_number | VARCHAR(50) | YES | | |
+| consultant_name | VARCHAR(255) | YES | | |
+| admission_datetime | TIMESTAMP | YES | | |
+| visit_start_datetime | TIMESTAMP | YES | | |
+| clinical_summary | JSONB | YES | | Note summaries, vitals, labs, I/O chart, investigations, medications |
+| document_type | VARCHAR(100) | NO | | Reuses `document_type_enum` |
+| document_name | VARCHAR(255) | YES | | |
+| file_path | TEXT | NO | | |
+| mime_type | VARCHAR(100) | NO | application/pdf | |
+| document_datetime | TIMESTAMP | YES | | |
+| file_size | BIGINT | YES | | |
+| checksum | VARCHAR(255) | YES | | |
+| last_seen_in_source_at | TIMESTAMP | YES | | |
+| last_synced_at | TIMESTAMP | NO | | |
+| created_at | TIMESTAMP | NO | now() | |
+| updated_at | TIMESTAMP | NO | now() | |
+
+**Indexes:**
+- `bcp_patient_clinical_summary(mrn)`
+- `bcp_patient_clinical_summary(encounter_id)`
+- `bcp_patient_clinical_summary(document_type)`
+- `bcp_patient_clinical_summary(business_date)`
+
+---
+
 ### bcp_sync_status
 
 Tracks n8n sync health per component.
@@ -266,6 +311,7 @@ bcp_user ──1:N──▶ bcp_user_role ◀──N:1── bcp_role
 
 bcp_active_patient ──(mrn)──▶ bcp_patient_clinical_profile
 bcp_active_patient ──(mrn)──▶ bcp_patient_pdf_document
+bcp_active_patient ──(mrn)──▶ bcp_patient_clinical_summary
 ```
 
 Clinical tables are joined by `mrn` (not FK) because they are independently synced by different n8n workflows.
