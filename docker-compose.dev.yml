@@ -51,6 +51,8 @@ services:
       - '127.0.0.1:5678:5678'
     volumes:
       - n8n_data:/home/node/.n8n
+      # Shared with bcp-api: n8n workflows write synced PDFs here, the API reads them.
+      - ./local-bcp-storage/pdfs:/data/pdfs
     depends_on:
       postgres:
         condition: service_healthy

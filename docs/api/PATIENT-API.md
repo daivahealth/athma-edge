@@ -165,9 +165,12 @@ Binary PDF file stream with headers:
 | Status | Condition |
 |--------|-----------|
 | 404 | No clinical summary synced for the given MRN |
+| 400 | The HIS verification webhook returned a body other than `{ "statusCode": "200" }` |
+| 502 | The HIS verification webhook is unreachable or `N8N_CLINICAL_SUMMARY_WEBHOOK_URL` is misconfigured |
 
 ### Notes
 
+- Before rendering, the API calls the n8n webhook configured in `N8N_CLINICAL_SUMMARY_WEBHOOK_URL` as `<url>?mrn=<mrn>&encounterNumber=<encounterId>`, re-validating the encounter against the HIS. A JSON body of `{ "statusCode": "200" }` allows the print; any other value blocks it with a 400. If the webhook URL is not configured, verification is skipped (logged as a warning) so the feature degrades gracefully in environments without it set up yet.
 - The PDF is generated on-demand from the `clinical_summary` JSONB payload (progress/nursing note summaries, allergies, vitals, lab results, intake/output, pending investigations, active medications) plus the row's own demographic/encounter columns
 - Audit event `PDF_VIEWED` is logged with the MRN (same event type used for synced PDF document downloads)
 - Not available for BCP temporary patients, since clinical summaries are only produced by the HIS sync pipeline

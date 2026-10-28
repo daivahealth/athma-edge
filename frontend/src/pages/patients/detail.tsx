@@ -13,6 +13,22 @@ import { StaleDataWarning, SyncTimestamp } from '@/components/layout/stale-data-
 import { NotesTabContent } from '@/components/patients/notes-tab-content';
 import { EditDemographicsDialog } from '@/components/patients/edit-demographics-dialog';
 
+// Blob-typed responses (PDF downloads) carry JSON error bodies as a Blob too,
+// so the backend's actual message (e.g. the HIS verification failure) needs
+// to be read out of it instead of falling back to a generic alert.
+async function extractErrorMessage(err: unknown): Promise<string> {
+  const data = (err as any)?.response?.data;
+  if (data instanceof Blob) {
+    try {
+      const parsed = JSON.parse(await data.text());
+      if (parsed?.message) return Array.isArray(parsed.message) ? parsed.message.join(', ') : parsed.message;
+    } catch {
+      // Fall through to the generic message below.
+    }
+  }
+  return 'Failed to generate clinical summary PDF.';
+}
+
 export default function ClinicalProfilePage() {
   // The route pattern cannot match without :mrn, but React Router
   // still types params as optional.
@@ -45,8 +61,8 @@ export default function ClinicalProfilePage() {
       a.download = `${mrn}-24h-clinical-summary.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      alert('Failed to generate clinical summary PDF.');
+    } catch (err) {
+      alert(await extractErrorMessage(err));
     } finally {
       setPrinting(false);
     }

@@ -14,7 +14,8 @@ RUN npm run build
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY backend/package*.json ./
-RUN npm ci
+# npm install, not ci: package-lock.json is currently behind package.json (pdfkit).
+RUN npm install
 COPY backend/prisma ./prisma
 RUN npx prisma generate
 COPY backend/ .

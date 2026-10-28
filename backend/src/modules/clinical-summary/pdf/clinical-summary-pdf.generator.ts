@@ -139,11 +139,12 @@ function pad(n: number): string {
 
 // Parses the literal date/time fields out of an ISO string without any timezone
 // shifting, matching Python's `datetime.fromisoformat(iso)` + `strftime` behaviour.
+// The time part is optional: medication start/end dates are date-only strings.
 function parseIsoFields(iso: string) {
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
   if (!m) return { year: 1970, month: 1, day: 1, hour: 0, minute: 0 };
   const [, y, mo, da, h, mi] = m;
-  return { year: +y, month: +mo, day: +da, hour: +h, minute: +mi };
+  return { year: +y, month: +mo, day: +da, hour: h ? +h : 0, minute: mi ? +mi : 0 };
 }
 
 function formatDateTime(iso: string | null | undefined): string {
@@ -191,38 +192,62 @@ function ensureSpace(doc: PDFKit.PDFDocument, height: number) {
   }
 }
 
-function heading(doc: PDFKit.PDFDocument, text: string) {
-  ensureSpace(doc, 24);
-  doc.moveDown(0.5);
-  doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text(text.toUpperCase());
-  doc.moveDown(0.2);
+// Every helper below pins an explicit x (and reports its own y afterwards)
+// instead of relying on pdfkit's implicit cursor continuation — mixing that
+// with the explicit-coordinate drawing used elsewhere (tables, grids) left
+// the cursor drifting rightward and misaligned entire sections.
+function heading(doc: PDFKit.PDFDocument, width: number, text: string) {
+  const label = text.toUpperCase();
+  doc.font('Helvetica-Bold').fontSize(10);
+  const h = doc.heightOfString(label, { width });
+  ensureSpace(doc, h + 12);
+  const y = doc.y + 8;
+  doc.fillColor('#000000').text(label, MARGIN_LEFT, y, { width });
+  doc.x = MARGIN_LEFT;
+  doc.y = y + h + 4;
 }
 
-function subheading(doc: PDFKit.PDFDocument, text: string) {
-  ensureSpace(doc, 18);
-  doc.font('Helvetica-Bold').fontSize(9).fillColor('#000000').text(text);
+function subheading(doc: PDFKit.PDFDocument, width: number, text: string) {
+  doc.font('Helvetica-Bold').fontSize(9);
+  const h = doc.heightOfString(text, { width });
+  ensureSpace(doc, h + 2);
+  const y = doc.y;
+  doc.fillColor('#000000').text(text, MARGIN_LEFT, y, { width });
+  doc.x = MARGIN_LEFT;
+  doc.y = y + h;
 }
 
 function note(doc: PDFKit.PDFDocument, width: number, text: string) {
-  const h = doc.font('Helvetica-Oblique').fontSize(8.5).heightOfString(text, { width });
+  doc.font('Helvetica-Oblique').fontSize(8.5);
+  const h = doc.heightOfString(text, { width });
   ensureSpace(doc, h + 4);
-  doc.font('Helvetica-Oblique').fontSize(8.5).fillColor(GREY).text(text, { width });
+  const y = doc.y;
+  doc.fillColor(GREY).text(text, MARGIN_LEFT, y, { width });
   doc.fillColor('#000000');
+  doc.x = MARGIN_LEFT;
+  doc.y = y + h + 2;
 }
 
 function paragraph(doc: PDFKit.PDFDocument, width: number, text: string) {
-  const h = doc.font('Helvetica').fontSize(9).heightOfString(text, { width });
+  doc.font('Helvetica').fontSize(9);
+  const h = doc.heightOfString(text, { width });
   ensureSpace(doc, h + 2);
-  doc.font('Helvetica').fontSize(9).text(text, { width });
+  const y = doc.y;
+  doc.text(text, MARGIN_LEFT, y, { width });
+  doc.x = MARGIN_LEFT;
+  doc.y = y + h + 2;
 }
 
 function bullet(doc: PDFKit.PDFDocument, width: number, text: string) {
   const indent = 15;
-  const h = doc.font('Helvetica').fontSize(9).heightOfString(text, { width: width - indent });
+  doc.font('Helvetica').fontSize(9);
+  const h = doc.heightOfString(text, { width: width - indent });
   ensureSpace(doc, h + 2);
   const y = doc.y;
   doc.text('•', MARGIN_LEFT, y, { width: indent });
   doc.text(text, MARGIN_LEFT + indent, y, { width: width - indent });
+  doc.x = MARGIN_LEFT;
+  doc.y = y + h + 2;
 }
 
 function keyValueGrid(
@@ -251,6 +276,7 @@ function keyValueGrid(
     doc.font('Helvetica').fontSize(fontSize).text(`: ${rv}`, x, y, { width: widths[3] });
     doc.y = y + h;
   });
+  doc.x = MARGIN_LEFT;
 }
 
 function rowHeight(
@@ -336,7 +362,8 @@ function drawTable(
 // ---------- sections ----------
 
 function patientBlock(doc: PDFKit.PDFDocument, p: ClinicalSummaryPatient, contentWidth: number) {
-  doc.font('Helvetica-Bold').fontSize(13).text('CLINICAL SUMMARY - LAST 24 HOURS');
+  doc.font('Helvetica-Bold').fontSize(13).text('CLINICAL SUMMARY - LAST 24 HOURS', MARGIN_LEFT, doc.y, { width: contentWidth });
+  doc.x = MARGIN_LEFT;
   doc.moveDown(0.3);
   doc
     .moveTo(MARGIN_LEFT, doc.y)
@@ -382,7 +409,7 @@ function notesSection(
   sec: NoteSection | undefined,
   kind: string,
 ) {
-  heading(doc, title);
+  heading(doc, width, title);
   if (!sec || !sec.summary) {
     bullet(doc, width, `No ${kind} note in this period`);
     return;
@@ -397,18 +424,18 @@ function notesSection(
   for (const [key, label] of LIST_KEYS) {
     const list = sec[key] as string[] | undefined;
     if (list && list.length) {
-      subheading(doc, label);
+      subheading(doc, width, label);
       list.forEach((item) => bullet(doc, width, item));
     }
   }
   if (sec.events && sec.events.length) {
-    subheading(doc, 'Events');
+    subheading(doc, width, 'Events');
     sec.events.forEach((e) => bullet(doc, width, `${e.datetime} - ${e.event}`));
   }
 }
 
 function allergySection(doc: PDFKit.PDFDocument, width: number, allergies: ClinicalSummaryJson['allergies']) {
-  heading(doc, 'Allergy');
+  heading(doc, width, 'Allergy');
   if (!allergies || allergies.length === 0) {
     bullet(doc, width, 'No allergy information recorded');
     return;
@@ -417,10 +444,10 @@ function allergySection(doc: PDFKit.PDFDocument, width: number, allergies: Clini
 }
 
 function vitalsSection(doc: PDFKit.PDFDocument, width: number, vitals: Record<string, any>[]) {
-  heading(doc, 'Latest Vitals');
+  heading(doc, width, 'Latest Vitals');
   const sorted = [...vitals].sort((a, b) => (b.recordedAt || '').localeCompare(a.recordedAt || ''));
   sorted.forEach((rec) => {
-    subheading(doc, `Recorded ${formatDateTime(rec.recordedAt)}`);
+    subheading(doc, width, `Recorded ${formatDateTime(rec.recordedAt)}`);
     doc.moveDown(0.1);
     const keys = Object.keys(rec)
       .filter((k) => k !== 'recordedAt')
@@ -453,7 +480,7 @@ function labTables(doc: PDFKit.PDFDocument, width: number, labs: Record<string, 
   Object.keys(labs)
     .sort((a, b) => b.localeCompare(a))
     .forEach((ts) => {
-      subheading(doc, `Collected ${formatDateTime(ts)}`);
+      subheading(doc, width, `Collected ${formatDateTime(ts)}`);
       doc.moveDown(0.1);
       const items = Object.entries(labs[ts]);
       const half = Math.ceil(items.length / 2);
@@ -470,10 +497,10 @@ function labTables(doc: PDFKit.PDFDocument, width: number, labs: Record<string, 
 
 function resultsSections(doc: PDFKit.PDFDocument, width: number, data: ClinicalSummaryJson) {
   if (data.lab_results && Object.keys(data.lab_results).length) {
-    heading(doc, 'Investigation Results');
+    heading(doc, width, 'Investigation Results');
     labTables(doc, width, data.lab_results);
   }
-  heading(doc, 'Abnormal Results');
+  heading(doc, width, 'Abnormal Results');
   const abnormal = data.abnormal_lab_results || {};
   if (Object.keys(abnormal).length) {
     labTables(doc, width, abnormal);
@@ -483,7 +510,7 @@ function resultsSections(doc: PDFKit.PDFDocument, width: number, data: ClinicalS
 }
 
 function ioSection(doc: PDFKit.PDFDocument, width: number, chart: ClinicalSummaryJson['intake_output_chart']) {
-  heading(doc, 'Intake / Output (hourly)');
+  heading(doc, width, 'Intake / Output (hourly)');
   const io = chart?.hourly_intake_output || [];
   if (!io.length) {
     bullet(doc, width, 'No intake/output recorded');
@@ -523,7 +550,7 @@ function ioSection(doc: PDFKit.PDFDocument, width: number, chart: ClinicalSummar
 }
 
 function pendingSection(doc: PDFKit.PDFDocument, width: number, pend: any[] | undefined) {
-  heading(doc, 'Pending Investigations');
+  heading(doc, width, 'Pending Investigations');
   if (!pend || pend.length === 0) {
     bullet(doc, width, 'No pending investigations');
     return;
@@ -538,7 +565,7 @@ function pendingSection(doc: PDFKit.PDFDocument, width: number, pend: any[] | un
 }
 
 function medsSection(doc: PDFKit.PDFDocument, width: number, meds: Medication[] | undefined) {
-  heading(doc, 'Active Medications');
+  heading(doc, width, 'Active Medications');
   if (!meds || meds.length === 0) {
     bullet(doc, width, 'No active medications');
     return;
@@ -591,21 +618,41 @@ function addRunningHeadersAndPageNumbers(doc: PDFKit.PDFDocument, patientLine: s
     doc.switchToPage(i);
     const { width: pageWidth, height: pageHeight } = doc.page;
 
+    // Drawing this close to the bottom edge can otherwise trip pdfkit's
+    // automatic pagination and silently inject extra blank pages.
+    const originalBottomMargin = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+
     if (i > range.start) {
-      doc.font('Helvetica').fontSize(10).fillColor('#000000').text(patientLine, MARGIN_LEFT, pageHeight - 56);
+      // Reportlab draws in a bottom-up coordinate system, so its "H - 40"/"H - 48"
+      // sit near the TOP of the page; pdfkit's y grows downward from the top,
+      // so the equivalent position here is a small y, not pageHeight-minus-something
+      // (that previously put this line at the bottom, on top of the footer).
+      doc.font('Helvetica').fontSize(10).fillColor('#000000').text(patientLine, MARGIN_LEFT, 32, {
+        width: pageWidth - MARGIN_LEFT - MARGIN_RIGHT,
+        lineBreak: false,
+      });
       doc
-        .moveTo(MARGIN_LEFT, pageHeight - 48)
-        .lineTo(pageWidth - MARGIN_RIGHT, pageHeight - 48)
+        .moveTo(MARGIN_LEFT, 48)
+        .lineTo(pageWidth - MARGIN_RIGHT, 48)
         .lineWidth(0.8)
         .strokeColor('#000000')
         .stroke();
     }
 
     doc.font('Helvetica').fontSize(8).fillColor(GREY);
-    doc.text(`Page ${i - range.start + 1} of ${total}`, pageWidth - MARGIN_RIGHT - 120, pageHeight - 30, {
+    doc.text(FOOTER_NOTE, MARGIN_LEFT, pageHeight - 22, {
+      width: pageWidth - MARGIN_LEFT - MARGIN_RIGHT - 130,
+      lineBreak: false,
+      ellipsis: true,
+    });
+    doc.text(`Page ${i - range.start + 1} of ${total}`, pageWidth - MARGIN_RIGHT - 120, pageHeight - 22, {
       width: 120,
       align: 'right',
+      lineBreak: false,
     });
-    doc.text(FOOTER_NOTE, MARGIN_LEFT, pageHeight - 30, { width: pageWidth - MARGIN_LEFT - MARGIN_RIGHT - 130 });
+
+    doc.page.margins.bottom = originalBottomMargin;
+    doc.x = MARGIN_LEFT;
   }
 }

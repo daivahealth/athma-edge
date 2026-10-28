@@ -89,6 +89,14 @@ The HIS-side API surface this workflow depends on, and what it does when a capab
 
 The export is `n8n/workflows/05-bcp-reconciliation.json`. Like workflows 01–03 it is a **template**: the BCP-side reads are real, the HIS-side writes are `TODO` placeholders pending the [Athma-specific mapping](../api/HIS-RECONCILIATION-CONTRACT.md#athma-specific-mapping).
 
+## Clinical Summary Print Verification (inbound to n8n)
+
+The only request that runs in the opposite direction: `bcp-api` calls an n8n **webhook** (not a scheduled workflow) to re-validate an encounter against the HIS before rendering a "Print Summary" PDF (see [PATIENT-API.md](../api/PATIENT-API.md#get-apibcppatientsmrnclinical-summarypdf)).
+
+- Configured via `N8N_CLINICAL_SUMMARY_WEBHOOK_URL` (see `.env.example`); called as `<url>?mrn=<mrn>&encounterNumber=<encounterId>`
+- Expects a JSON body of `{ "statusCode": "200" }` to allow the print; any other value blocks it
+- If unset, `bcp-api` skips verification and logs a warning, so the feature degrades gracefully where this webhook isn't deployed yet
+
 It is deliberately safe to import before that work is done:
 
 - `dryRun` defaults to **true**
