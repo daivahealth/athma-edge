@@ -11,6 +11,7 @@ Sync workflow design for the Athma Edge BCP application. n8n is the sole mechani
 | 3 | PDF Document Sync | 5-10 minutes | bcp_patient_pdf_document |
 | 4 | Daily Rollover | Daily, 00:00 | bcp_active_patient |
 | 5 | BCP Reconciliation (write-back) | Manual, after stand-down | Source HIS (outbound) |
+| 11 | Cleanup PDF Storage | Manual, before re-running PDF syncs | bcp_patient_pdf_document + `/data/pdfs` |
 
 ## Workflow 1: Active Patient Sync
 
@@ -96,6 +97,18 @@ The only request that runs in the opposite direction: `bcp-api` calls an n8n **w
 - Configured via `N8N_CLINICAL_SUMMARY_WEBHOOK_URL` (see `.env.example`); called as `<url>?mrn=<mrn>&encounterNumber=<encounterId>`
 - Expects a JSON body of `{ "statusCode": "200" }` to allow the print; any other value blocks it
 - If unset, `bcp-api` skips verification and logs a warning, so the feature degrades gracefully where this webhook isn't deployed yet
+
+## Workflow 11: Cleanup PDF Storage
+
+**Export:** `Step 11 - Cleanup PDF Storage.json`
+
+**Trigger:** Manual only. Run it by hand before re-running Step 6 (or any other PDF-writing workflow) when you need a clean slate, e.g. during testing or after changing the PDF generation logic.
+
+**Steps:**
+1. **Code** — Recursively deletes every file and subdirectory under `/data/pdfs`, keeping the root directory itself
+2. **Postgres** — `DELETE FROM bcp_patient_pdf_document` (hard delete, not soft delete — this table is a disposable local cache of synced document metadata, re-populated by the PDF-writing workflows on their next run)
+
+This is destructive and intentionally **not** scheduled. It does not touch `bcp_active_patient`, `bcp_patient_clinical_profile`, or `bcp_patient_clinical_summary`.
 
 It is deliberately safe to import before that work is done:
 

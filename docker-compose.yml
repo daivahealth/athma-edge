@@ -66,6 +66,13 @@ services:
       # America/New_York, which silently shifts every cron by hours.
       GENERIC_TIMEZONE: ${TZ:-Asia/Kolkata}
       TZ: ${TZ:-Asia/Kolkata}
+      # n8n blocks file-system nodes (Read/Write Files from Disk, etc.) outside
+      # this allow-list by default; without it, writes to /data/pdfs fail with
+      # "Access to the file is not allowed".
+      N8N_RESTRICT_FILE_ACCESS_TO: /data/pdfs
+      # Code nodes sandbox require() by default; several workflows need fs/path
+      # to read, write, or delete synced PDFs directly (e.g. Step 6, Step 11).
+      NODE_FUNCTION_ALLOW_BUILTIN: fs,path
     ports:
       - '127.0.0.1:5678:5678'
     volumes:

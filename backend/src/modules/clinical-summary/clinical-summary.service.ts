@@ -74,15 +74,20 @@ export class ClinicalSummaryService {
       throw new BadGatewayException('Unable to reach the HIS verification service. Please try again.');
     }
 
+    const rawBody = await response.text();
     let body: { statusCode?: string | number } = {};
     try {
-      body = await response.json();
+      body = rawBody ? JSON.parse(rawBody) : {};
     } catch {
       // Non-JSON body falls through to the HTTP status check below.
     }
 
     const statusCode = String(body.statusCode ?? response.status);
     if (statusCode !== '200') {
+      this.logger.warn(
+        `HIS verification declined for mrn=${mrn} encounterNumber=${encounterNumber ?? '(none)'} ` +
+          `url=${url.toString()} httpStatus=${response.status} body=${rawBody}`,
+      );
       throw new BadRequestException('The HIS declined to authorize this clinical summary print.');
     }
   }

@@ -23,6 +23,8 @@ All services on `bcp-network` (bridge driver).
 | ./local-bcp-storage/pdfs/ | Bind mount | PDF document storage (shared by bcp-api and n8n) |
 | ./init-scripts/ | Bind mount | PostgreSQL initialization scripts |
 
+n8n only reads/writes this path because `N8N_RESTRICT_FILE_ACCESS_TO=/data/pdfs` allow-lists it explicitly — n8n's Read/Write Files from Disk (and other file-system) nodes refuse paths outside this list by default and fail with "Access to the file is not allowed" otherwise.
+
 ## Dependencies
 
 ```
@@ -51,6 +53,8 @@ See `.env.example` at the project root. Key variables:
 - `JWT_SECRET`, `JWT_EXPIRY`, `FRONTEND_ORIGIN`, `ADMIN_BOOTSTRAP_PASSWORD`
 - `PDF_STORAGE_PATH`
 - `N8N_BASIC_AUTH_USER`, `N8N_BASIC_AUTH_PASSWORD`
+- `N8N_RESTRICT_FILE_ACCESS_TO` — fixed at `/data/pdfs` in both compose files; required for n8n's file-system nodes to write synced PDFs
+- `NODE_FUNCTION_ALLOW_BUILTIN` — fixed at `fs,path`; n8n's Code node sandboxes `require()` by default, and several workflows (Step 6, Step 11) need these built-ins to read/write/delete PDFs directly
 - `TZ` — site timezone, defaults to `Asia/Kolkata`. Drives the n8n container clock and
   `GENERIC_TIMEZONE`, which is what n8n cron/schedule triggers are evaluated against.
   See [N8N-WORKFLOWS.md](N8N-WORKFLOWS.md) — leaving it unset makes every scheduled
